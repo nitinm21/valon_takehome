@@ -3,12 +3,13 @@ import { NextResponse } from "next/server";
 
 const DEFAULT_MODEL = "gemini-3-pro-image-preview";
 const HOUSE_STYLE_APPENDIX = `
-Create the image like an overconfident bad presentation designer made it.
-Always include large visible slide text inside the image itself.
-Render that text in an obvious Comic Sans or Comic Sans-like playful font.
-Use cheesy business-presentation energy, bright primary colors, clashing accents, and slightly awkward composition.
-Prefer corny iconography, stock-art vibes, and unnecessary decorative shapes.
-Do not make it subtle, elegant, or restrained.
+Create a clean, modern, professional presentation slide image.
+Use a polished, minimal aesthetic with clear visual hierarchy and generous whitespace.
+Favor a restrained, harmonious color palette with strong contrast and soft, even lighting.
+Keep the composition balanced, well-aligned to a grid, and free of clutter.
+If the image includes text, render it in a crisp, legible sans-serif, keep it short, and position it cleanly.
+Prefer simple elegant iconography and high-quality, tasteful visuals over busy decoration.
+Avoid distortion, clashing colors, busy backgrounds, and low-quality clip-art.
 `.trim();
 
 export async function POST(request: Request) {
