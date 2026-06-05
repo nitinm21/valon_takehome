@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { deleteImage, getAllImages, putImage } from "./lib/imageStore";
+
 type SlideStatus = "idle" | "working" | "done" | "error";
 
 type Slide = {
@@ -61,6 +63,24 @@ export default function Home() {
       setSlides(fresh);
       setSelectedId(fresh[0]?.id ?? "");
     }
+
+    // Images live in IndexedDB (not localStorage). Load them asynchronously and
+    // merge onto the slides we just hydrated from text/metadata.
+    getAllImages()
+      .then((images) => {
+        if (!Object.keys(images).length) {
+          return;
+        }
+        setSlides((current) =>
+          current.map((slide) =>
+            images[slide.id] ? { ...slide, imageData: images[slide.id] } : slide
+          )
+        );
+      })
+      .catch(() => {
+        // Best-effort: if IndexedDB is unavailable the deck still works without
+        // persisted images.
+      });
   }, []);
 
   useEffect(() => {
@@ -68,9 +88,24 @@ export default function Home() {
       return;
     }
 
+    // Persist only text/metadata here. Image blobs are kept out of localStorage
+    // (they go to IndexedDB) so this stays tiny and cheap to write on every edit
+    // instead of re-serializing megabytes of base64 on each keystroke.
+    const lightweightSlides = slides.map((slide) => ({
+      id: slide.id,
+      name: slide.name,
+      prompt: slide.prompt,
+      status: slide.status,
+      note: slide.note,
+      feedback: slide.feedback
+    }));
+
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ slides, selectedId: selectedId || slides[0].id })
+      JSON.stringify({
+        slides: lightweightSlides,
+        selectedId: selectedId || slides[0].id
+      })
     );
   }, [slides, selectedId]);
 
@@ -103,6 +138,7 @@ export default function Home() {
 
     const nextSlides = slides.filter((slide) => slide.id !== id);
     setSlides(nextSlides);
+    void deleteImage(id);
 
     if (selectedId === id) {
       setSelectedId(nextSlides[0]?.id ?? "");
@@ -161,6 +197,7 @@ export default function Home() {
       status: "done",
       feedback: payload.text || "Done."
     });
+    void putImage(selectedSlide.id, payload.imageData);
     setMessage("New image dropped into the slide.");
   }
 
