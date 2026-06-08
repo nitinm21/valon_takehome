@@ -2,14 +2,11 @@ import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
 const DEFAULT_MODEL = "gemini-3-pro-image-preview";
-const HOUSE_STYLE_APPENDIX = `
-Create a clean, modern, professional presentation slide image.
-Use a polished, minimal aesthetic with clear visual hierarchy and generous whitespace.
-Favor a restrained, harmonious color palette with strong contrast and soft, even lighting.
-Keep the composition balanced, well-aligned to a grid, and free of clutter.
-If the image includes text, render it in a crisp, legible sans-serif, keep it short, and position it cleanly.
-Prefer simple elegant iconography and high-quality, tasteful visuals over busy decoration.
-Avoid distortion, clashing colors, busy backgrounds, and low-quality clip-art.
+// This endpoint now fills a single image element, not a whole slide, so we ask
+// the model for just the picture the user described — no slide framing.
+const IMAGE_STYLE_APPENDIX = `
+Render a single high-quality image of the subject described above.
+Do not add slide layouts, captions, borders, watermarks, or UI chrome.
 `.trim();
 
 export async function POST(request: Request) {
@@ -30,7 +27,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Prompt is required." }, { status: 400 });
     }
 
-    const effectivePrompt = `${prompt}\n\n${HOUSE_STYLE_APPENDIX}`;
+    const effectivePrompt = `${prompt}\n\n${IMAGE_STYLE_APPENDIX}`;
 
     const client = new GoogleGenAI({ apiKey });
     const response = await client.models.generateContent({
