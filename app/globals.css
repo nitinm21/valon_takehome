@@ -745,14 +745,6 @@ button {
   line-height: 1;
 }
 
-/* Transparent click-away catcher behind the generate popover. */
-.gen-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 40;
-  background: transparent;
-}
-
 .gen-popover {
   position: absolute;
   bottom: calc(100% + 12px);
@@ -772,9 +764,28 @@ button {
 }
 
 .gen-popover-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 1rem;
   font-weight: 600;
   color: var(--ink);
+}
+
+.gen-popover-close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 6px;
+  border-radius: 6px;
+}
+
+.gen-popover-close:hover {
+  color: var(--ink);
+  background: #f1f3f5;
 }
 
 /* Prompt textarea with an embedded send button. */

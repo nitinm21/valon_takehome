@@ -175,8 +175,13 @@ export function ElementView({ element }: { element: SlideElement }) {
         editRef.current?.blur();
       } else if (event.key === "Enter") {
         // Enter inserts a newline inside the box (Escape/click-out commits).
+        // Use insertLineBreak rather than a raw "\n" text node: in a
+        // white-space:pre-wrap box a trailing "\n" is invisible and the caret
+        // doesn't move to the new line, so Enter felt like a no-op. insertLineBreak
+        // also drops a browser-managed trailing break so the new line renders, and
+        // it's consumed once the user types — the serializer still reads plain "\n".
         event.preventDefault();
-        insertTextAtCaret("\n");
+        document.execCommand("insertLineBreak");
       }
     };
 

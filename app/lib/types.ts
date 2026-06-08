@@ -54,10 +54,20 @@ export type Background =
   | { type: "solid"; color: string }
   | { type: "gradient"; from: string; to: string; angle: number };
 
+// Provenance for an AI-generated slide: the layout + style it came from and the
+// structured content used. Lets the "edit" flow iterate on the slide in place
+// (same layout) instead of generating a new one. Absent on hand-made slides.
+export type SlideSource = {
+  templateId: string;
+  style: string;
+  slots: Record<string, { text?: string; prompt?: string; heading?: string }>;
+};
+
 export type Slide = {
   id: string;
   background: Background;
   elements: SlideElement[];
+  source?: SlideSource;
 };
 
 export type Deck = {

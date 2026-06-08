@@ -101,8 +101,9 @@ function mix(a: string, b: string, t: number): string {
 
 // A subtle card/panel tint that sits on the background, for the Boxes style.
 // Light decks get a slightly darker neutral; dark decks get a lighter panel, so
-// cards read as raised surfaces either way.
-function surfaceFor(bg: Background): string {
+// cards read as raised surfaces either way. Exported so the edit flow can compute
+// it for a specific slide's background (which may differ from the deck default).
+export function surfaceColorFor(bg: Background): string {
   const base = representativeColor(bg);
   return luminance(base) > 0.5
     ? mix(base, "#000000", 0.06)
@@ -229,7 +230,7 @@ export function deriveTheme(deck: Deck): ThemeSummary {
 
   return {
     background,
-    surfaceColor: surfaceFor(background),
+    surfaceColor: surfaceColorFor(background),
     palette: distinctColors(deck),
     titleColor: titleRun?.color ?? "#111111",
     bodyColor: modeColor(runs) ?? "#333333",

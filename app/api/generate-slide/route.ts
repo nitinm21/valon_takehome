@@ -121,6 +121,35 @@ GENERAL RULES:
 Return JSON only.`;
 }
 
+// EDIT mode: iterate on an existing slide. Keep its layout (same templateId) and
+// change only what the instruction asks, using the current content as the base.
+function editPrompt(
+  instruction: string,
+  theme: unknown,
+  templateId: string,
+  currentSlots: unknown
+): string {
+  return `You are EDITING an existing presentation slide. Keep the SAME layout — fill the slots for templateId "${templateId}" — and change ONLY what the instruction asks; keep everything else faithful to the current content.
+
+CURRENT SLIDE CONTENT (JSON):
+${JSON.stringify(currentSlots ?? {})}
+
+CHANGE REQUESTED:
+${instruction}
+
+DECK THEME (match palette and tone):
+${JSON.stringify(theme)}
+
+${STYLE_GUIDE[templateId] ?? STYLE_GUIDE.paragraph}
+
+GENERAL RULES:
+- Apply only the requested change; preserve the rest of the content.
+- title: a punchy heading, at most ~8 words.
+- For image prompts: describe a picture only — no text, words, or UI.
+- Keep copy concise so it fits comfortably in its slot.
+Return JSON only.`;
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" ? (value as Record<string, unknown>) : {};
 }
@@ -218,23 +247,39 @@ export async function POST(request: Request) {
       topic?: string;
       theme?: unknown;
       style?: string;
+      current?: unknown;
     };
     const topic = body.topic?.trim();
     if (!topic) {
       return NextResponse.json({ error: "Topic is required." }, { status: 400 });
     }
     const theme = body.theme ?? {};
-    const style = typeof body.style === "string" && body.style ? body.style : "magic";
-    const forced = style !== "magic" && TEMPLATE_IDS.includes(style);
-
     const model = process.env.GOOGLE_SLIDE_MODEL || DEFAULT_MODEL;
     const client = new GoogleGenAI({ apiKey });
 
-    const templateId = forced ? style : await chooseTemplate(client, model, topic, theme);
+    // Edit mode is signalled by the client sending the current slide's known
+    // template; we keep that layout and rewrite the content per the instruction.
+    const current = asRecord(body.current);
+    const editTemplateId =
+      typeof current.templateId === "string" && TEMPLATES[current.templateId]
+        ? current.templateId
+        : "";
+
+    let templateId: string;
+    let contents: string;
+    if (editTemplateId) {
+      templateId = editTemplateId;
+      contents = editPrompt(topic, theme, templateId, current.slots);
+    } else {
+      const style = typeof body.style === "string" && body.style ? body.style : "magic";
+      const forced = style !== "magic" && TEMPLATE_IDS.includes(style);
+      templateId = forced ? style : await chooseTemplate(client, model, topic, theme);
+      contents = contentPrompt(topic, theme, templateId);
+    }
 
     const response = await client.models.generateContent({
       model,
-      contents: contentPrompt(topic, theme, templateId),
+      contents,
       config: {
         responseMimeType: "application/json",
         responseSchema: schemaForTemplate(templateId),

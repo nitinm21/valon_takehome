@@ -11,6 +11,7 @@ import type {
   ImageElement,
   Slide,
   SlideElement,
+  SlideSource,
   TextElement,
   TextRun
 } from "./types";
@@ -275,6 +276,13 @@ type EditorState = {
   addGeneratedSlide: (slide: {
     background: Background;
     elements: SlideElement[];
+    source?: SlideSource;
+  }) => void;
+  // Edit flow: replace the CURRENT slide's contents in place (same id, position,
+  // and background) — used to iterate on a generated slide without adding a new one.
+  editCurrentSlide: (update: {
+    elements: SlideElement[];
+    source?: SlideSource;
   }) => void;
   deleteSlide: (id: string) => void;
   selectSlide: (id: string) => void;
@@ -354,9 +362,9 @@ export const useEditor = create<EditorState>((set, get) => ({
       };
     }),
 
-  addGeneratedSlide: ({ background, elements }) =>
+  addGeneratedSlide: ({ background, elements, source }) =>
     set((state) => {
-      const slide: Slide = { id: uid(), background, elements };
+      const slide: Slide = { id: uid(), background, elements, source };
       return {
         deck: {
           ...state.deck,
@@ -367,6 +375,19 @@ export const useEditor = create<EditorState>((set, get) => ({
         editingId: null
       };
     }),
+
+  editCurrentSlide: ({ elements, source }) =>
+    set((state) => ({
+      // Keep the slide's id, position, and background; swap its contents + source.
+      deck: mapCurrentSlide(state.deck, (slide) => ({
+        ...slide,
+        elements,
+        source: source ?? slide.source
+      })),
+      // Old element ids are gone after the swap — clear any stale selection.
+      selectedId: null,
+      editingId: null
+    })),
 
   deleteSlide: (id) =>
     set((state) => {
