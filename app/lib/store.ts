@@ -119,6 +119,26 @@ function dropElement(deck: Deck, id: string): Deck {
   }));
 }
 
+// Like patchElement but searches EVERY slide, not just the selected one. Used for
+// async image results: a generated slide can have several images filling in while
+// the user has already navigated to another slide, so the patch must find the
+// element wherever it lives (element ids are unique across the deck).
+function patchElementAnywhere(
+  deck: Deck,
+  id: string,
+  fn: (element: SlideElement) => SlideElement
+): Deck {
+  return {
+    ...deck,
+    slides: deck.slides.map((slide) => ({
+      ...slide,
+      elements: slide.elements.map((element) =>
+        element.id === id ? fn(element) : element
+      )
+    }))
+  };
+}
+
 // Legacy text boxes (pre-rich-text decks in localStorage) stored a single
 // `text` string plus element-level fontSize/color/bold. Convert any of those to
 // a single run so older saved decks keep loading.
@@ -249,6 +269,13 @@ type EditorState = {
   setBackground: (background: Background) => void;
 
   addSlide: () => void;
+  // Insert a pre-built slide (e.g. AI-generated) and select it. Elements arrive
+  // fully formed (ids, geometry, z) from the slide builder — same shape addText/
+  // addImage produce — so they're immediately editable & movable.
+  addGeneratedSlide: (slide: {
+    background: Background;
+    elements: SlideElement[];
+  }) => void;
   deleteSlide: (id: string) => void;
   selectSlide: (id: string) => void;
   reorderSlides: (fromIndex: number, toIndex: number) => void;
@@ -316,6 +343,20 @@ export const useEditor = create<EditorState>((set, get) => ({
         background: { type: "solid", color: "#ffffff" },
         elements: []
       };
+      return {
+        deck: {
+          ...state.deck,
+          slides: [...state.deck.slides, slide],
+          selectedSlideId: slide.id
+        },
+        selectedId: null,
+        editingId: null
+      };
+    }),
+
+  addGeneratedSlide: ({ background, elements }) =>
+    set((state) => {
+      const slide: Slide = { id: uid(), background, elements };
       return {
         deck: {
           ...state.deck,
@@ -468,7 +509,7 @@ export const useEditor = create<EditorState>((set, get) => ({
 
   updateImage: (id, patch) =>
     set((state) => ({
-      deck: patchElement(state.deck, id, (el) =>
+      deck: patchElementAnywhere(state.deck, id, (el) =>
         el.type === "image" ? { ...el, ...patch } : el
       )
     })),

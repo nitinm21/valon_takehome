@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Artboard } from "./components/Artboard";
+import { GeneratePopover } from "./components/GeneratePopover";
 import { SlidePanel } from "./components/SlidePanel";
 import { SlideRail } from "./components/SlideRail";
 import { exportDeck } from "./lib/exportDeck";
@@ -30,6 +31,7 @@ export default function Home() {
   const scale = useEditor((state) => state.scale);
 
   const [panelOpen, setPanelOpen] = useState(false);
+  const [genOpen, setGenOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -65,6 +67,17 @@ export default function Home() {
             </span>
             Image
           </button>
+          <button
+            className={`insert-btn ${panelOpen ? "active" : ""}`}
+            onClick={() => setPanelOpen((open) => !open)}
+            type="button"
+          >
+            <span
+              className="bg-chip-swatch"
+              style={{ background: backgroundCss(background) }}
+            />
+            Background
+          </button>
         </div>
 
         <div className="topbar-right">
@@ -88,14 +101,17 @@ export default function Home() {
 
       <footer className="bottombar">
         <button
-          className={`bg-chip ${panelOpen ? "active" : ""}`}
-          onClick={() => setPanelOpen((open) => !open)}
+          className={`gen-trigger ${genOpen ? "active" : ""}`}
+          onClick={() => setGenOpen((open) => !open)}
           type="button"
         >
-          <span className="bg-chip-swatch" style={{ background: backgroundCss(background) }} />
-          Background
+          <span className="gen-trigger-icon" aria-hidden>
+            ✨
+          </span>
+          Generate with AI
         </button>
         <span className="zoom-readout">{Math.round(scale * 100)}%</span>
+        {genOpen && <GeneratePopover onClose={() => setGenOpen(false)} />}
       </footer>
     </main>
   );
