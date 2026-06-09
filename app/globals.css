@@ -428,6 +428,22 @@ button {
   min-width: 152px;
 }
 
+/* Font-family trigger + popover */
+.tt-font-trigger {
+  min-width: 96px;
+  max-width: 140px;
+}
+
+.tt-font-trigger .tt-trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tt-font-popover {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
 .tt-item {
   display: flex;
   align-items: center;

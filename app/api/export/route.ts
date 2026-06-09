@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import pptxgen from "pptxgenjs";
 
+import { exportFontName } from "../../lib/fonts";
+
 // LAYOUT_WIDE is 13.333in × 7.5in (16:9). The editor's logical slide is
 // 1280×720, so one logical px maps linearly to inches; font px → points at ×0.75
 // (1280 logical px ↔ 960 pt). See IMPLEMENTATION_PLAN.md §3.7.
@@ -16,6 +18,7 @@ type ExportRun = {
   color: string;
   bold: boolean;
   italic: boolean;
+  fontFamily?: string; // font id (see lib/fonts.ts); absent = default
 };
 type ExportText = {
   type: "text";
@@ -95,7 +98,7 @@ export async function POST(request: Request) {
             return parts.map((part, index) => ({
               text: part,
               options: {
-                fontFace: "Inter",
+                fontFace: exportFontName(run.fontFamily),
                 fontSize: run.fontSize * PT_PER_PX,
                 color: hex(run.color),
                 bold: run.bold,

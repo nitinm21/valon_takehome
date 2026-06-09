@@ -8,6 +8,11 @@
 // Bold/italic/color are applied with document.execCommand (styleWithCSS); only
 // font size needs a custom span-wrap since execCommand has no px size.
 
+import {
+  DEFAULT_FONT_ID,
+  fontIdFromCss,
+  fontVarToken
+} from "./fonts";
 import type { TextRun } from "./types";
 
 export type RunStyle = Omit<TextRun, "text">;
@@ -18,7 +23,8 @@ export const DEFAULT_RUN_STYLE: RunStyle = {
   fontSize: 48,
   color: "#111111",
   bold: false,
-  italic: false
+  italic: false,
+  fontFamily: DEFAULT_FONT_ID
 };
 
 // The font-size quick-pick list (matches the size dropdown). Custom values are
@@ -128,6 +134,7 @@ export function runsToFragment(runs: TextRun[]): DocumentFragment {
     span.style.color = run.color;
     span.style.fontWeight = run.bold ? "700" : "400";
     span.style.fontStyle = run.italic ? "italic" : "normal";
+    span.style.fontFamily = fontVarToken(run.fontFamily);
     span.textContent = run.text;
     fragment.appendChild(span);
   }
@@ -147,6 +154,7 @@ function computeStyle(
   let color: string | undefined;
   let bold: boolean | undefined;
   let italic: boolean | undefined;
+  let fontFamily: string | undefined;
 
   let node: HTMLElement | null = textNode.parentElement;
   while (node) {
@@ -156,6 +164,12 @@ function computeStyle(
     }
     if (color === undefined && style.color) {
       color = toHex(style.color);
+    }
+    if (fontFamily === undefined && style.fontFamily) {
+      const id = fontIdFromCss(style.fontFamily);
+      if (id) {
+        fontFamily = id;
+      }
     }
     if (bold === undefined) {
       if (style.fontWeight) {
@@ -181,7 +195,8 @@ function computeStyle(
     fontSize: fontSize ?? fallback.fontSize,
     color: color ?? fallback.color,
     bold: bold ?? fallback.bold,
-    italic: italic ?? fallback.italic
+    italic: italic ?? fallback.italic,
+    fontFamily: fontFamily ?? fallback.fontFamily ?? DEFAULT_FONT_ID
   };
 }
 
@@ -190,7 +205,8 @@ function sameStyle(a: RunStyle, b: RunStyle): boolean {
     a.fontSize === b.fontSize &&
     a.color === b.color &&
     a.bold === b.bold &&
-    a.italic === b.italic
+    a.italic === b.italic &&
+    a.fontFamily === b.fontFamily
   );
 }
 
@@ -283,6 +299,54 @@ export function selectionFontSize(root: HTMLElement): number | null {
     return null;
   }
   return sizes.size === 1 ? [...sizes][0] : null;
+}
+
+// The nearest inline font id for a node, climbing ancestors up to `root`. Reads
+// the inline `font-family` (our `var(--font-x)` token) rather than
+// getComputedStyle, which would resolve the var to a hashed family name we can't
+// reverse-map. Falls back to the default when nothing on the path sets a font.
+function inlineFontId(node: Node, root: HTMLElement): string {
+  let el: HTMLElement | null =
+    node instanceof HTMLElement ? node : node.parentElement;
+  while (el) {
+    const id = fontIdFromCss(el.style.fontFamily);
+    if (id) {
+      return id;
+    }
+    if (el === root) {
+      break;
+    }
+    el = el.parentElement;
+  }
+  return DEFAULT_FONT_ID;
+}
+
+// The uniform font id of the current selection, or null if it spans multiple
+// fonts. A collapsed caret reports the font at the caret (for the toolbar).
+export function selectionFontFamily(root: HTMLElement): string | null {
+  const selection = window.getSelection();
+  if (!selection || selection.rangeCount === 0) {
+    return null;
+  }
+  const range = selection.getRangeAt(0);
+
+  if (range.collapsed) {
+    return inlineFontId((selection.anchorNode as Node | null) ?? root, root);
+  }
+
+  const ids = new Set<string>();
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode();
+  while (node) {
+    if ((node.textContent ?? "").length && range.intersectsNode(node)) {
+      ids.add(inlineFontId(node, root));
+    }
+    node = walker.nextNode();
+  }
+  if (ids.size === 0) {
+    return null;
+  }
+  return ids.size === 1 ? [...ids][0] : null;
 }
 
 // The current selection's color via the browser. queryCommandValue returns the

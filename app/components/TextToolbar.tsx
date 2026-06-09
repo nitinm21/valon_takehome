@@ -10,11 +10,19 @@ import {
 } from "react";
 
 import {
+  DEFAULT_FONT_ID,
+  FONTS,
+  fontStack,
+  fontVarToken,
+  getFont
+} from "../lib/fonts";
+import {
   applyInlineStyleToSelection,
   clampFont,
   DEFAULT_RUN_STYLE,
   deriveStyleLabel,
   selectionColor,
+  selectionFontFamily,
   selectionFontSize,
   serializeDomToRuns,
   stepFontSize,
@@ -26,11 +34,13 @@ import { useEditor } from "../lib/store";
 import type { TextElement } from "../lib/types";
 
 // Tristate: true (all), false (none), null (mixed selection / multiple values).
+// fontFamily holds a font id (lib/fonts.ts), or null when the selection is mixed.
 type Display = {
   fontSize: number | null;
   color: string;
   bold: boolean | null;
   italic: boolean | null;
+  fontFamily: string | null;
 };
 
 const PREVIEW_SIZE: Record<TextStyleId, number> = {
@@ -47,6 +57,7 @@ function boxDisplay(element: TextElement): Display {
   const runs = element.runs;
   const sizes = new Set(runs.map((run) => run.fontSize));
   const colors = new Set(runs.map((run) => run.color));
+  const fonts = new Set(runs.map((run) => run.fontFamily ?? DEFAULT_FONT_ID));
   const allBold = runs.length > 0 && runs.every((run) => run.bold);
   const anyBold = runs.some((run) => run.bold);
   const allItalic = runs.length > 0 && runs.every((run) => run.italic);
@@ -55,7 +66,8 @@ function boxDisplay(element: TextElement): Display {
     fontSize: sizes.size === 1 ? [...sizes][0] : null,
     color: colors.size === 1 ? [...colors][0] : (runs[0]?.color ?? "#111111"),
     bold: allBold ? true : anyBold ? null : false,
-    italic: allItalic ? true : anyItalic ? null : false
+    italic: allItalic ? true : anyItalic ? null : false,
+    fontFamily: fonts.size === 1 ? [...fonts][0] : null
   };
 }
 
@@ -73,7 +85,8 @@ function editingDisplay(node: HTMLElement): Display {
     fontSize: selectionFontSize(node),
     color: selectionColor(),
     bold,
-    italic
+    italic,
+    fontFamily: selectionFontFamily(node)
   };
 }
 
@@ -156,7 +169,9 @@ export function TextToolbar({
 
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const [display, setDisplay] = useState<Display>(() => boxDisplay(element));
-  const [openMenu, setOpenMenu] = useState<"style" | "align" | null>(null);
+  const [openMenu, setOpenMenu] = useState<"style" | "font" | "align" | null>(
+    null
+  );
   const [sizeDraft, setSizeDraft] = useState("");
   const sizeFocused = useRef(false);
   // Last non-collapsed selection inside the editable; restored before applying a
@@ -301,6 +316,17 @@ export function TextToolbar({
     }
   };
 
+  const applyFont = (fontId: string) => {
+    if (isEditing) {
+      runInEditor(() =>
+        applyInlineStyleToSelection("font-family", fontVarToken(fontId))
+      );
+    } else {
+      formatBox(element.id, { fontFamily: fontId });
+    }
+    setOpenMenu(null);
+  };
+
   const applySize = (px: number) => {
     const size = clampFont(px);
     if (isEditing) {
@@ -354,6 +380,7 @@ export function TextToolbar({
   }
 
   const styleLabel = deriveStyleLabel(display.fontSize, display.bold);
+  const fontLabel = display.fontFamily ? getFont(display.fontFamily).label : "Mixed";
 
   return (
     <div className="text-toolbar" data-toolbar style={{ left: pos.left, top: pos.top }}>
@@ -388,6 +415,43 @@ export function TextToolbar({
                   {style.label}
                 </span>
                 {styleLabel === style.label && <Check />}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <span className="tt-divider" />
+
+      {/* Font family */}
+      <div className="tt-dd">
+        <button
+          className="tt-trigger tt-font-trigger"
+          onClick={() => setOpenMenu((m) => (m === "font" ? null : "font"))}
+          onMouseDown={keepSelection}
+          title="Font"
+          type="button"
+        >
+          <span className="tt-trigger-label">{fontLabel}</span>
+          <Chevron />
+        </button>
+        {openMenu === "font" && (
+          <div className="tt-popover tt-font-popover" data-toolbar>
+            {FONTS.map((font) => (
+              <button
+                className="tt-item"
+                key={font.id}
+                onClick={() => applyFont(font.id)}
+                onMouseDown={keepSelection}
+                type="button"
+              >
+                <span
+                  className="tt-item-label"
+                  style={{ fontFamily: fontStack(font.id), fontSize: 15 }}
+                >
+                  {font.label}
+                </span>
+                {display.fontFamily === font.id && <Check />}
               </button>
             ))}
           </div>

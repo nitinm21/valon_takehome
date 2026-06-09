@@ -23,6 +23,7 @@ export type TextRun = {
   color: string; // hex
   bold: boolean;
   italic: boolean;
+  fontFamily?: string; // font id from lib/fonts.ts; absent = default (Inter)
 };
 
 export type TextElement = Geometry & {

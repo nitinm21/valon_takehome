@@ -10,6 +10,7 @@ import {
   type MouseEvent as ReactMouseEvent
 } from "react";
 
+import { fontStack } from "../lib/fonts";
 import {
   DEFAULT_RUN_STYLE,
   runsText,
@@ -232,6 +233,7 @@ export function ElementView({ element }: { element: SlideElement }) {
           ...frame,
           color: showPlaceholder ? "#9aa1ab" : base.color,
           fontSize: base.fontSize,
+          fontFamily: fontStack(base.fontFamily),
           fontWeight: base.bold ? 700 : 400,
           fontStyle: base.italic ? "italic" : "normal",
           textAlign: element.align,
@@ -255,6 +257,7 @@ export function ElementView({ element }: { element: SlideElement }) {
                   style={{
                     fontSize: run.fontSize,
                     color: run.color,
+                    fontFamily: fontStack(run.fontFamily),
                     fontWeight: run.bold ? 700 : 400,
                     fontStyle: run.italic ? "italic" : "normal"
                   }}

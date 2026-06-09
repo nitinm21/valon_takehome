@@ -191,7 +191,8 @@ function normalizeTextElement(element: SlideElement): SlideElement {
             ? legacy.color
             : DEFAULT_RUN_STYLE.color,
         bold: Boolean(legacy.bold),
-        italic: Boolean(legacy.italic)
+        italic: Boolean(legacy.italic),
+        fontFamily: DEFAULT_RUN_STYLE.fontFamily
       }
     ]
   };
