@@ -38,6 +38,16 @@ export type GeneratedSlide = { background: Background; elements: SlideElement[] 
 // in buildSlide by order, so a Boxes card (declared/pushed before its text) sits
 // behind it.
 export const TEMPLATES: Record<string, Template> = {
+  // Title/opener slide: a large centered title with an optional subtitle. Used as
+  // slide 1 of an AI-generated deck. Not offered in the manual style picker.
+  cover: {
+    id: "cover",
+    name: "Cover",
+    slots: {
+      title: { role: "title", type: "text", rect: { x: 140, y: 250, w: 1000, h: 180 } },
+      subtitle: { role: "body", type: "text", rect: { x: 200, y: 452, w: 880, h: 110 } }
+    }
+  },
   bullets: {
     id: "bullets",
     name: "Bullets",
@@ -76,6 +86,9 @@ export const TEMPLATES: Record<string, Template> = {
 };
 
 export const TEMPLATE_IDS = Object.keys(TEMPLATES);
+// Content layouts only — excludes the cover, which is reserved for slide 1 of a
+// generated deck. The magic picker and the deck planner choose from these.
+export const CONTENT_TEMPLATE_IDS = TEMPLATE_IDS.filter((id) => id !== "cover");
 export const DEFAULT_TEMPLATE = "paragraph";
 
 function uid(): string {
@@ -254,6 +267,62 @@ function buildBox(
   return out;
 }
 
+// Cover sizing: a deliberately large, centered title with a quieter subtitle.
+// Title starts bigger than the deck's title size (covers carry the deck), then
+// fits to its slot; subtitle is a fixed, modest size.
+const COVER_TITLE_SIZE = 78;
+const COVER_SUBTITLE_SIZE = 30;
+
+// Build the opener slide: centered title (+ optional subtitle), regardless of the
+// deck's usual alignment — covers always read centered.
+function buildCover(
+  template: Template,
+  content: SlideContent,
+  theme: ThemeSummary
+): SlideElement[] {
+  const out: SlideElement[] = [];
+  const { background } = theme;
+
+  const titleSlot = template.slots.title;
+  const titleText = content.title?.text?.trim();
+  if (titleSlot && titleText) {
+    const startSize = Math.max(theme.titleSize, COVER_TITLE_SIZE);
+    const size = fitFontSize(titleText, titleSlot.rect.w, titleSlot.rect.h, startSize);
+    out.push(
+      textElement(
+        titleSlot.rect,
+        titleText,
+        size,
+        pickReadableColor(background, theme.titleColor),
+        true,
+        "center"
+      )
+    );
+  }
+
+  const subtitleSlot = template.slots.subtitle;
+  const subtitleText = content.subtitle?.text?.trim();
+  if (subtitleSlot && subtitleText) {
+    const size = fitFontSize(
+      subtitleText,
+      subtitleSlot.rect.w,
+      subtitleSlot.rect.h,
+      COVER_SUBTITLE_SIZE
+    );
+    out.push(
+      textElement(
+        subtitleSlot.rect,
+        subtitleText,
+        size,
+        pickReadableColor(background, theme.bodyColor),
+        false,
+        "center"
+      )
+    );
+  }
+  return out;
+}
+
 // Turn newline-separated points into bullet lines (markers added here so the LLM
 // just returns plain points).
 function bulletize(text: string): string {
@@ -276,6 +345,15 @@ export function buildSlide(
   const template = TEMPLATES[templateId] ?? TEMPLATES[DEFAULT_TEMPLATE];
   const background = theme.background;
   const elements: SlideElement[] = [];
+
+  // Cover has its own centered builder.
+  if (template.id === "cover") {
+    const coverElements = buildCover(template, content, theme);
+    coverElements.forEach((element, index) => {
+      element.z = index + 1;
+    });
+    return { background, elements: coverElements };
+  }
 
   for (const [name, slot] of Object.entries(template.slots)) {
     const c = content[name];

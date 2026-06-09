@@ -209,6 +209,13 @@ function distinctColors(deck: Deck): string[] {
 // stays small (cheap LLM context later) and resists overfitting: title size is
 // the largest text seen, body size the median of the smaller text, and an empty
 // deck falls back to sensible defaults.
+// The theme an AI-generated deck starts from: a clean light skeleton (no deck
+// theming yet, per spec). Equivalent to deriving from an empty deck, so every
+// slide in a fresh deck shares one consistent look.
+export function defaultTheme(): ThemeSummary {
+  return deriveTheme({ id: "", title: "", slides: [], selectedSlideId: "" });
+}
+
 export function deriveTheme(deck: Deck): ThemeSummary {
   const texts = deck.slides.flatMap((slide) => slide.elements).filter(isText);
   const runs = texts.flatMap((t) => t.runs);

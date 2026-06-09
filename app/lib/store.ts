@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { create } from "zustand";
 
-import { getAllImages, pruneImages } from "./imageStore";
 import { DEFAULT_RUN_STYLE, runsText, type RunStyle } from "./richText";
 import type {
   Background,
@@ -23,7 +22,9 @@ import type {
 export const ARTBOARD_W = 1280;
 export const ARTBOARD_H = 720;
 
-const STORAGE_KEY = "valon-slides-deck-v1";
+// The id of the placeholder deck the store holds before a real deck is loaded
+// from the library. It is never written to the deck library / localStorage.
+export const SEED_DECK_ID = "seed-deck";
 const MIN_W = 24;
 const MIN_H = 24;
 
@@ -82,7 +83,7 @@ function initialDeck(): Deck {
     ]
   };
   return {
-    id: "seed-deck",
+    id: SEED_DECK_ID,
     title: "Untitled deck",
     slides: [slide],
     selectedSlideId: slide.id
@@ -140,115 +141,8 @@ function patchElementAnywhere(
   };
 }
 
-// Legacy text boxes (pre-rich-text decks in localStorage) stored a single
-// `text` string plus element-level fontSize/color/bold. Convert any of those to
-// a single run so older saved decks keep loading.
-type LegacyText = {
-  id: string;
-  type: "text";
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  rotation?: number;
-  z?: number;
-  align?: TextElement["align"];
-  runs?: TextRun[];
-  text?: string;
-  fontSize?: number;
-  color?: string;
-  bold?: boolean;
-  italic?: boolean;
-};
-
-function normalizeTextElement(element: SlideElement): SlideElement {
-  if (element.type !== "text") {
-    return element;
-  }
-  const legacy = element as unknown as LegacyText;
-  if (Array.isArray(legacy.runs)) {
-    return element;
-  }
-  return {
-    id: legacy.id,
-    type: "text",
-    x: legacy.x,
-    y: legacy.y,
-    w: legacy.w,
-    h: legacy.h,
-    rotation: legacy.rotation ?? 0,
-    z: legacy.z ?? 1,
-    align: legacy.align ?? "left",
-    runs: [
-      {
-        text: typeof legacy.text === "string" ? legacy.text : "",
-        fontSize:
-          typeof legacy.fontSize === "number"
-            ? legacy.fontSize
-            : DEFAULT_RUN_STYLE.fontSize,
-        color:
-          typeof legacy.color === "string"
-            ? legacy.color
-            : DEFAULT_RUN_STYLE.color,
-        bold: Boolean(legacy.bold),
-        italic: Boolean(legacy.italic),
-        fontFamily: DEFAULT_RUN_STYLE.fontFamily
-      }
-    ]
-  };
-}
-
-// Migrate legacy text boxes to runs, then drop placeholder/empty text boxes —
-// e.g. a box created but never typed into, then persisted before its
-// discard-on-blur could fire (a reload mid-add).
-function sanitizeDeck(deck: Deck): Deck {
-  return {
-    ...deck,
-    slides: deck.slides.map((slide) => ({
-      ...slide,
-      elements: slide.elements.map(normalizeTextElement).filter((element) => {
-        if (element.type !== "text") {
-          return true;
-        }
-        const text = runsText(element.runs).trim();
-        return text !== "" && text !== NEW_TEXT_DEFAULT;
-      })
-    }))
-  };
-}
-
-function eachElement(deck: Deck, fn: (el: SlideElement) => SlideElement): Deck {
-  return {
-    ...deck,
-    slides: deck.slides.map((slide) => ({
-      ...slide,
-      elements: slide.elements.map(fn)
-    }))
-  };
-}
-
-// Image blobs live in IndexedDB, not localStorage — strip them before saving.
-function stripImageData(deck: Deck): Deck {
-  return eachElement(deck, (el) =>
-    el.type === "image" ? { ...el, src: undefined } : el
-  );
-}
-
-// Re-attach image blobs (from IndexedDB) to elements on load, and normalize
-// status so nothing is stuck "generating" and missing blobs fall back to empty.
-function mergeImageData(deck: Deck, images: Record<string, string>): Deck {
-  return eachElement(deck, (el) =>
-    el.type === "image"
-      ? images[el.id]
-        ? { ...el, src: images[el.id], status: "done" }
-        : { ...el, src: undefined, status: "idle" }
-      : el
-  );
-}
-
-function allElementIds(deck: Deck): string[] {
-  return deck.slides.flatMap((slide) => slide.elements.map((el) => el.id));
-}
+// Deck (de)serialization, legacy migration, and image strip/merge helpers now
+// live in deckStore.ts (the multi-deck persistence layer).
 
 type EditorState = {
   deck: Deck;
@@ -264,6 +158,8 @@ type EditorState = {
   setScale: (scale: number) => void;
   currentSlide: () => Slide;
   replaceDeck: (deck: Deck) => void;
+  // Rename the open deck (persisted by the deck-library save subscription).
+  setDeckTitle: (title: string) => void;
 
   select: (id: string | null) => void;
   startEditing: (id: string) => void;
@@ -285,6 +181,17 @@ type EditorState = {
     elements: SlideElement[];
     source?: SlideSource;
   }) => void;
+  // Streaming deck fill: replace a slide's contents BY ID (not necessarily the
+  // selected one) and clear its `pending` state. Called as each slide of an
+  // AI-generated deck finishes, while the user may be on a different slide.
+  replaceSlideContents: (
+    id: string,
+    update: {
+      elements: SlideElement[];
+      source?: SlideSource;
+      background?: Background;
+    }
+  ) => void;
   deleteSlide: (id: string) => void;
   selectSlide: (id: string) => void;
   reorderSlides: (fromIndex: number, toIndex: number) => void;
@@ -334,6 +241,9 @@ export const useEditor = create<EditorState>((set, get) => ({
   },
 
   replaceDeck: (deck) => set({ deck, selectedId: null, editingId: null }),
+
+  setDeckTitle: (title) =>
+    set((state) => ({ deck: { ...state.deck, title } })),
 
   // Single click selects; selecting always leaves edit mode (§5.2).
   select: (id) => set({ selectedId: id, editingId: null }),
@@ -390,6 +300,26 @@ export const useEditor = create<EditorState>((set, get) => ({
       // Old element ids are gone after the swap — clear any stale selection.
       selectedId: null,
       editingId: null
+    })),
+
+  replaceSlideContents: (id, { elements, source, background }) =>
+    set((state) => ({
+      deck: {
+        ...state.deck,
+        slides: state.deck.slides.map((slide) =>
+          slide.id === id
+            ? {
+                ...slide,
+                elements,
+                source: source ?? slide.source,
+                background: background ?? slide.background,
+                // Content has arrived — drop the skeleton.
+                pending: false,
+                pendingTitle: undefined
+              }
+            : slide
+        )
+      }
     })),
 
   deleteSlide: (id) =>
@@ -580,58 +510,10 @@ export const useEditor = create<EditorState>((set, get) => ({
     })
 }));
 
-// ---- hooks: persistence + global keyboard ---------------------------------
-
-// Minimal localStorage persistence of the deck (text + geometry). Images are
-// out of scope until Phase 3, so the payload stays small.
-export function usePersistDeck() {
-  const replaceDeck = useEditor((state) => state.replaceDeck);
-  const hydrated = useRef(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const raw = window.localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          let deck = sanitizeDeck(JSON.parse(raw) as Deck);
-          if (deck?.slides?.length) {
-            const images = await getAllImages();
-            deck = mergeImageData(deck, images);
-            if (!cancelled) {
-              replaceDeck(deck);
-            }
-          }
-        }
-      } catch {
-        // Corrupt/absent storage: keep the default deck.
-      }
-      hydrated.current = true;
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [replaceDeck]);
-
-  useEffect(() => {
-    return useEditor.subscribe((state, prev) => {
-      if (!hydrated.current || state.deck === prev.deck) {
-        return;
-      }
-      try {
-        // Persist text/geometry only; image blobs go to IndexedDB (and orphans
-        // get pruned as elements come and go).
-        window.localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(stripImageData(state.deck))
-        );
-      } catch {
-        // Best-effort; ignore quota/availability errors.
-      }
-      void pruneImages(allElementIds(state.deck));
-    });
-  }, []);
-}
+// ---- hooks: global keyboard -----------------------------------------------
+// Deck persistence (multi-deck library) lives in deckStore.ts: usePersistDecks
+// (global save subscription, mounted in the root layout) and useLoadDeck (load a
+// specific deck by id into the store).
 
 function isTypingTarget(target: EventTarget | null): boolean {
   return (

@@ -87,6 +87,17 @@ function ThumbElement({ element }: { element: SlideElement }) {
 // 1280×720 logical coordinates as the editor so it's pixel-faithful.
 export function SlideThumb({ slide }: { slide: Slide }) {
   const scale = THUMB_W / ARTBOARD_W;
+
+  // While a generated slide is still streaming in, show a tiny shimmer instead of
+  // the (empty) elements.
+  if (slide.pending) {
+    return (
+      <div className="thumb thumb-pending" style={{ width: THUMB_W, height: THUMB_H }}>
+        <span className="thumb-pending-spinner" aria-hidden />
+      </div>
+    );
+  }
+
   return (
     <div className="thumb" style={{ width: THUMB_W, height: THUMB_H }}>
       <div

@@ -119,9 +119,23 @@ export function Artboard() {
             background
           }}
         >
-          {slide.elements.map((element) => (
-            <ElementView element={element} key={element.id} />
-          ))}
+          {slide.pending ? (
+            <div className="slide-skeleton">
+              <div className="skeleton-spinner" aria-hidden />
+              <div className="skeleton-title">
+                {slide.pendingTitle || "Generating slide…"}
+              </div>
+              <div className="skeleton-bars">
+                <span className="skeleton-bar" />
+                <span className="skeleton-bar" />
+                <span className="skeleton-bar short" />
+              </div>
+            </div>
+          ) : (
+            slide.elements.map((element) => (
+              <ElementView element={element} key={element.id} />
+            ))
+          )}
         </div>
       </div>
 

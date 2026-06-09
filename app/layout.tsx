@@ -12,6 +12,7 @@ import {
   Work_Sans
 } from "next/font/google";
 import "./globals.css";
+import { PersistenceBridge } from "./components/PersistenceBridge";
 
 // All editor-selectable fonts (see lib/fonts.ts) — seven sans-serif, three serif.
 // Each exposes a CSS variable; applying every variable to <html> lets
@@ -63,7 +64,10 @@ export default function RootLayout({
 }>) {
   return (
     <html className={fontVariables} lang="en">
-      <body>{children}</body>
+      <body>
+        <PersistenceBridge />
+        {children}
+      </body>
     </html>
   );
 }

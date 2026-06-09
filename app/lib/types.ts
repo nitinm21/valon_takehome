@@ -69,6 +69,12 @@ export type Slide = {
   background: Background;
   elements: SlideElement[];
   source?: SlideSource;
+  // Set while an AI-generated deck is streaming in: the slide exists (so it shows
+  // in the rail and can be navigated to) but its content hasn't arrived yet, so
+  // the editor renders a skeleton/spinner. `pendingTitle` is the outline title
+  // shown faintly during the wait. Both are cleared once content lands.
+  pending?: boolean;
+  pendingTitle?: string;
 };
 
 export type Deck = {
@@ -76,4 +82,26 @@ export type Deck = {
   title: string;
   slides: Slide[];
   selectedSlideId: string;
+};
+
+// ---- deck-creation outline ------------------------------------------------
+// The intermediate structure the user edits before the full deck is generated.
+// `layout` is the planned style for the slide ("cover" only ever for slide 1).
+
+export type OutlineLayout =
+  | "cover"
+  | "bullets"
+  | "paragraph"
+  | "boxes"
+  | "two-col-image";
+
+export type OutlineSlide = {
+  title: string;
+  bullets: string[];
+  layout: OutlineLayout;
+};
+
+export type Outline = {
+  deckTitle: string;
+  slides: OutlineSlide[];
 };

@@ -2,8 +2,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { NextResponse } from "next/server";
 
 import {
+  CONTENT_TEMPLATE_IDS,
   DEFAULT_TEMPLATE,
-  TEMPLATE_IDS,
   TEMPLATES,
   type SlideContent
 } from "../../lib/layouts";
@@ -62,15 +62,18 @@ function schemaForTemplate(templateId: string) {
   };
 }
 
-// Tiny schema for the Magic layout-picker call.
+// Tiny schema for the Magic layout-picker call. Cover is excluded — it's only
+// ever slide 1 of a generated deck, never a magic pick.
 const CLASSIFY_SCHEMA = {
   type: Type.OBJECT,
-  properties: { templateId: { type: Type.STRING, enum: TEMPLATE_IDS } },
+  properties: { templateId: { type: Type.STRING, enum: CONTENT_TEMPLATE_IDS } },
   required: ["templateId"]
 };
 
 // Per-style content instructions. Keys match template ids (= the user styles).
 const STYLE_GUIDE: Record<string, string> = {
+  cover:
+    "Layout TITLE SLIDE. Fill `title` (the deck or section title) and `subtitle` (one short supporting line).",
   bullets:
     "Layout BULLETS. Fill `title` and `body`. body = 3 to 6 short points, ONE PER LINE (newline-separated). Do NOT add bullet characters — they are added automatically.",
   paragraph:
@@ -116,6 +119,41 @@ ${STYLE_GUIDE[templateId] ?? STYLE_GUIDE.paragraph}
 
 GENERAL RULES:
 - title: a punchy heading, at most ~8 words.
+- For image prompts: describe a picture only — no text, words, or UI.
+- Keep copy concise so it fits comfortably in its slot.
+Return JSON only.`;
+}
+
+// DECK mode: expand ONE approved outline slide (title + key points) into the
+// layout the deck planner assigned. Stays faithful to the outline so the user's
+// edits in the outline editor flow through to the finished slide.
+function deckContentPrompt(
+  outline: { deckTitle?: string; title?: string; bullets?: string[] },
+  theme: unknown,
+  templateId: string
+): string {
+  const deckTitle = outline.deckTitle?.trim() || "this presentation";
+  const title = outline.title?.trim() || "";
+  const points = (outline.bullets ?? [])
+    .map((b) => `- ${b}`)
+    .join("\n");
+
+  return `You write the content for ONE slide in a presentation titled "${deckTitle}".
+
+This slide's APPROVED OUTLINE:
+TITLE: ${title}
+KEY POINTS:
+${points || "- (none provided)"}
+
+Expand these key points into the layout below. Stay faithful to the title and points — do NOT introduce unrelated topics.
+
+DECK THEME (match palette and tone):
+${JSON.stringify(theme)}
+
+${STYLE_GUIDE[templateId] ?? STYLE_GUIDE.paragraph}
+
+GENERAL RULES:
+- title: use the slide title above (you may tighten it), at most ~8 words.
 - For image prompts: describe a picture only — no text, words, or UI.
 - Keep copy concise so it fits comfortably in its slot.
 Return JSON only.`;
@@ -225,7 +263,7 @@ async function chooseTemplate(
     });
     const parsed = asRecord(safeParse(response.text));
     return typeof parsed.templateId === "string" &&
-      TEMPLATE_IDS.includes(parsed.templateId)
+      CONTENT_TEMPLATE_IDS.includes(parsed.templateId)
       ? parsed.templateId
       : DEFAULT_TEMPLATE;
   } catch {
@@ -248,6 +286,7 @@ export async function POST(request: Request) {
       theme?: unknown;
       style?: string;
       current?: unknown;
+      outline?: { deckTitle?: string; title?: string; bullets?: string[] };
     };
     const topic = body.topic?.trim();
     if (!topic) {
@@ -272,9 +311,12 @@ export async function POST(request: Request) {
       contents = editPrompt(topic, theme, templateId, current.slots);
     } else {
       const style = typeof body.style === "string" && body.style ? body.style : "magic";
-      const forced = style !== "magic" && TEMPLATE_IDS.includes(style);
+      const forced = style !== "magic" && CONTENT_TEMPLATE_IDS.includes(style);
       templateId = forced ? style : await chooseTemplate(client, model, topic, theme);
-      contents = contentPrompt(topic, theme, templateId);
+      // Deck mode: ground the content in the approved outline slide.
+      contents = body.outline
+        ? deckContentPrompt(body.outline, theme, templateId)
+        : contentPrompt(topic, theme, templateId);
     }
 
     const response = await client.models.generateContent({
