@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { Artboard } from "../../components/Artboard";
 import { GeneratePopover } from "../../components/GeneratePopover";
+import { PresentMode } from "../../components/PresentMode";
 import { SlidePanel } from "../../components/SlidePanel";
 import { SlideRail } from "../../components/SlideRail";
 import { useLoadDeck } from "../../lib/deckStore";
@@ -30,11 +31,14 @@ export default function Editor() {
   const addImage = useEditor((state) => state.addImage);
   const background = useEditor((state) => state.currentSlide().background);
   const scale = useEditor((state) => state.scale);
+  const slides = useEditor((state) => state.deck.slides);
+  const selectedSlideId = useEditor((state) => state.deck.selectedSlideId);
   const generating = useEditor((state) =>
     state.deck.slides.some((slide) => slide.pending)
   );
 
   const [panelOpen, setPanelOpen] = useState(false);
+  const [presenting, setPresenting] = useState(false);
   const [genOpen, setGenOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -77,6 +81,7 @@ export default function Editor() {
   }
 
   return (
+    <>
     <main className={`editor-shell ${panelOpen ? "panel-open" : ""}`}>
       <header className="topbar">
         <div className="topbar-left">
@@ -152,6 +157,15 @@ export default function Editor() {
         <div className="topbar-right">
           {exportError && <span className="export-error">{exportError}</span>}
           <button
+            aria-label="Present"
+            className="btn present-btn"
+            onClick={() => setPresenting(true)}
+            title="Present"
+            type="button"
+          >
+            ▶
+          </button>
+          <button
             className="btn btn-primary"
             disabled={exporting || generating}
             onClick={handleExport}
@@ -183,5 +197,14 @@ export default function Editor() {
         {genOpen && <GeneratePopover onClose={() => setGenOpen(false)} />}
       </footer>
     </main>
+
+    {presenting && (
+      <PresentMode
+        initialIndex={Math.max(0, slides.findIndex((s) => s.id === selectedSlideId))}
+        onExit={() => setPresenting(false)}
+        slides={slides}
+      />
+    )}
+  </>
   );
 }
