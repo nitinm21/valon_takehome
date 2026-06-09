@@ -6,6 +6,7 @@ import Moveable from "react-moveable";
 import { ARTBOARD_H, ARTBOARD_W, useEditor } from "../lib/store";
 import { ElementView } from "./ElementView";
 import { ImageToolbar } from "./ImageToolbar";
+import { ShapeToolbar } from "./ShapeToolbar";
 import { TextToolbar } from "./TextToolbar";
 
 // Breathing room (screen px) kept around the slide inside the pane.
@@ -78,6 +79,10 @@ export function Artboard() {
     selectedElement?.type === "image" && selectedElement.src
       ? selectedElement
       : null;
+  // Shape toolbar (recolor fill) whenever a shape — e.g. a "boxes" card — is
+  // selected and not being dragged into edit (shapes have no edit mode).
+  const showShapeToolbar =
+    selectedElement?.type === "shape" ? selectedElement : null;
 
   const background =
     slide.background.type === "solid"
@@ -176,6 +181,9 @@ export function Artboard() {
       {showToolbar && <TextToolbar element={showToolbar} paneRef={paneRef} />}
       {showImageToolbar && (
         <ImageToolbar element={showImageToolbar} paneRef={paneRef} />
+      )}
+      {showShapeToolbar && (
+        <ShapeToolbar element={showShapeToolbar} paneRef={paneRef} />
       )}
     </div>
   );

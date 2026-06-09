@@ -32,6 +32,7 @@ import {
 } from "../lib/richText";
 import { useEditor } from "../lib/store";
 import type { TextElement } from "../lib/types";
+import { ColorPicker } from "./ColorPicker";
 
 // Tristate: true (all), false (none), null (mixed selection / multiple values).
 // fontFamily holds a font id (lib/fonts.ts), or null when the selection is mixed.
@@ -169,9 +170,9 @@ export function TextToolbar({
 
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null);
   const [display, setDisplay] = useState<Display>(() => boxDisplay(element));
-  const [openMenu, setOpenMenu] = useState<"style" | "font" | "align" | null>(
-    null
-  );
+  const [openMenu, setOpenMenu] = useState<
+    "style" | "font" | "align" | "color" | null
+  >(null);
   const [sizeDraft, setSizeDraft] = useState("");
   const sizeFocused = useRef(false);
   // Last non-collapsed selection inside the editable; restored before applying a
@@ -504,17 +505,25 @@ export function TextToolbar({
       <span className="tt-divider" />
 
       {/* Text color — the "A" glyph with a colored underline; click opens the
-          native picker (functionality unchanged, icon updated). */}
-      <label className="tt-color" data-toolbar title="Text color">
-        <span className="tt-color-glyph">A</span>
-        <span className="tt-color-bar" style={{ background: display.color }} />
-        <input
-          className="tt-color-input"
-          onChange={(event) => applyColor(event.target.value)}
-          type="color"
-          value={toHex(display.color)}
-        />
-      </label>
+          shared ColorPicker (the same one used for backgrounds & shapes). */}
+      <div className="tt-dd">
+        <button
+          className="tt-color"
+          data-toolbar
+          onClick={() => setOpenMenu((m) => (m === "color" ? null : "color"))}
+          onMouseDown={keepSelection}
+          title="Text color"
+          type="button"
+        >
+          <span className="tt-color-glyph">A</span>
+          <span className="tt-color-bar" style={{ background: display.color }} />
+        </button>
+        {openMenu === "color" && (
+          <div className="tt-popover color-popover" data-toolbar>
+            <ColorPicker onChange={applyColor} value={toHex(display.color)} />
+          </div>
+        )}
+      </div>
 
       <span className="tt-divider" />
 

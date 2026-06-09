@@ -294,6 +294,8 @@ type EditorState = {
   // — used for whole-box formatting when a box is selected but not being edited.
   formatBox: (id: string, patch: Partial<RunStyle>) => void;
   setAlign: (id: string, align: TextElement["align"]) => void;
+  // Recolor a shape element's fill — used by the shape toolbar.
+  setShapeFill: (id: string, fill: string) => void;
   // Persist edited runs WITHOUT leaving edit mode (called after each in-editor
   // format op so the store stays in sync if editing ends without a blur).
   syncRuns: (id: string, runs: TextRun[]) => void;
@@ -471,6 +473,13 @@ export const useEditor = create<EditorState>((set, get) => ({
     set((state) => ({
       deck: patchElement(state.deck, id, (el) =>
         el.type === "text" ? { ...el, align } : el
+      )
+    })),
+
+  setShapeFill: (id, fill) =>
+    set((state) => ({
+      deck: patchElement(state.deck, id, (el) =>
+        el.type === "shape" ? { ...el, fill } : el
       )
     })),
 
