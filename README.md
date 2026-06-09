@@ -1,60 +1,92 @@
-# valon-presentation-takehome
+# Valon Takehome 
 
-`valon-presentation-takehome` is a small, public starter project for a Valon take-home. It is intentionally a working starting point rather than a finished product: the app can create slides, call Google's image generation model for slide art, and export the result as a `.pptx`, but there is plenty of room to improve the product, UX, and overall quality.
+An AI-native slide editor. 
 
-The expected workflow is simple:
+---
 
-1. Fork this repo into your own GitHub account.
-2. Run it locally.
-3. Use your preferred AI-native workflow and your own judgment to evolve it.
-4. Share your fork back with us.
+## Quick start
 
-## What the app does
+> **Prerequisites:** [Node.js 20+](https://nodejs.org) (LTS recommended) and npm.
+> Check with `node -v`.
 
-- Keeps a tiny slide deck in local browser storage.
-- Shows a left-hand slide rail and a main slide canvas.
-- Lets you add and remove slides.
-- Sends prompts to Google's image model and places the returned image onto a slide.
-- Exports the current deck as a PowerPoint file.
+**1. Install dependencies**
 
-## Local setup
+```bash
+npm install
+```
 
-1. Install dependencies:
+**2. Create your local env file from the template**
 
-   ```bash
-   npm install
-   ```
+```bash
+cp .env.example .env.local
+```
 
-2. Copy the environment template:
+**3. Add your Google AI API key**
 
-   ```bash
-   cp .env.example .env.local
-   ```
+This app uses Google's Gemini models. Create a free key here:
 
-3. Add a Google AI API key to `.env.local`:
+**[Create a key at Google AI Studio → aistudio.google.com/apikey](https://aistudio.google.com/apikey)**
 
-   ```bash
-   GOOGLE_API_KEY=your_key_here
-   GOOGLE_IMAGE_MODEL=gemini-3-pro-image-preview
-   ```
+Open `.env.local` and paste it in:
 
-   `GOOGLE_IMAGE_MODEL` is optional. The default is `gemini-3-pro-image-preview`.
+```bash
+GOOGLE_API_KEY=paste_your_key_here
+```
 
-4. Start the local dev server:
+**4. Start the app**
 
-   ```bash
-   npm run dev
-   ```
+```bash
+npm run dev
+```
 
-5. Open [http://localhost:3000](http://localhost:3000).
+Open **[http://localhost:3000](http://localhost:3000)**. That's it.
 
-## Notes
+---
 
-- This app stores deck state in the browser. There is no database.
-- The Google API key is used only on the server route inside the app.
-- Hosting and deployment are out of scope for the exercise.
-- If you prefer to work with tools like Claude Code, Codex, Gemini CLI, or similar, do that in your own fork.
+## Environment variables
 
-## Suggested focus
+`.env.local` is git-ignored, so your key stays out of version control.
 
-Treat this repo like a rough product seed. The goal is not to preserve the starter exactly as-is; it is to turn it into something stronger with better product sense, better interface decisions, and better implementation choices.
+| Variable             | Required | Default                         | Purpose                                              |
+| -------------------- | -------- | ------------------------------- | ---------------------------------------------------- |
+| `GOOGLE_API_KEY`     | **Yes**  | —                               | Authenticates all Gemini requests.                   |
+| `GOOGLE_IMAGE_MODEL` | No       | `gemini-3-pro-image-preview`    | Model used for slide image generation.               |
+| `GOOGLE_SLIDE_MODEL` | No       | `gemini-2.5-flash`              | Model used for outline / slide text generation.      |
+
+The API key is read only in server-side API routes (`app/api/*`) and is never
+exposed to the browser.
+
+---
+
+## Scripts
+
+| Command            | What it does                                  |
+| ------------------ | --------------------------------------------- |
+| `npm run dev`      | Start the local dev server on port 3000.      |
+| `npm run build`    | Production build.                             |
+| `npm start`        | Serve the production build.                    |
+| `npm run typecheck`| Type-check with `tsc` (no emit).              |
+
+---
+
+## Troubleshooting
+
+- **Generation fails / 401 / "missing API key":** Make sure `GOOGLE_API_KEY` is
+  set in `.env.local` and that you restarted `npm run dev` after editing it.
+- **Port 3000 is in use:** Run on another port with `npm run dev -- -p 3001`.
+- **Stale build errors:** Delete the `.next` folder and run `npm run dev` again.
+- **Decks disappeared:** Deck state is stored in your browser's local storage,
+  so it's per-browser and cleared when you clear site data. There is no database.
+
+---
+
+## How it works
+
+- **Deck library** (`/`) — browse, open, or create decks.
+- **Create flow** (`/create`) — describe or paste content → review an editable
+  outline → stream a full deck into the editor.
+- **Editor** (`/editor/[deckId]`) — a slide canvas with text, shapes, images,
+  themes, AI image generation, AI whole-slide generation, and per-slide AI edits.
+- **Export** — download the current deck as a `.pptx` file.
+
+
