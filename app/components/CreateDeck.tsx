@@ -56,7 +56,7 @@ export function CreateDeck() {
     if (!outline) {
       return;
     }
-    const id = startDeckGeneration(outline, getTheme(themeId).summary);
+    const id = startDeckGeneration(outline, getTheme(themeId).summary, themeId);
     if (id) {
       router.push(`/editor/${id}`);
     }

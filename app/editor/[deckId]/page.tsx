@@ -8,7 +8,9 @@ import { GeneratePopover } from "../../components/GeneratePopover";
 import { PresentMode } from "../../components/PresentMode";
 import { SlidePanel } from "../../components/SlidePanel";
 import { SlideRail } from "../../components/SlideRail";
-import { useLoadDeck } from "../../lib/deckStore";
+import { SourcesPanel } from "../../components/SourcesPanel";
+import { ThemePopover } from "../../components/ThemePopover";
+import { useDeckSync, useLoadDeck } from "../../lib/deckStore";
 import { exportDeck } from "../../lib/exportDeck";
 import { GRADIENT_ANGLE, useEditor, useEditorKeyboard } from "../../lib/store";
 import type { Background } from "../../lib/types";
@@ -24,6 +26,9 @@ export default function Editor() {
   const params = useParams<{ deckId: string }>();
   const deckId = params.deckId;
   const ready = useLoadDeck(deckId);
+  // Live agent sync: picks up deck changes written through the API (e.g. a
+  // refine op from Claude Code) while this editor is open.
+  useDeckSync(deckId, ready);
 
   const title = useEditor((state) => state.deck.title);
   const setDeckTitle = useEditor((state) => state.setDeckTitle);
@@ -40,6 +45,7 @@ export default function Editor() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [presenting, setPresenting] = useState(false);
   const [genOpen, setGenOpen] = useState(false);
+  const [themeOpen, setThemeOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
 
@@ -152,6 +158,19 @@ export default function Editor() {
             />
             Background
           </button>
+          <span className="theme-anchor">
+            <button
+              className={`insert-btn ${themeOpen ? "active" : ""}`}
+              onClick={() => setThemeOpen((open) => !open)}
+              type="button"
+            >
+              <span className="insert-icon" aria-hidden>
+                ◑
+              </span>
+              Theme
+            </button>
+            {themeOpen && <ThemePopover onClose={() => setThemeOpen(false)} />}
+          </span>
         </div>
 
         <div className="topbar-right">
@@ -193,6 +212,7 @@ export default function Editor() {
           </span>
           Generate with AI
         </button>
+        <SourcesPanel />
         <span className="zoom-readout">{Math.round(scale * 100)}%</span>
         {genOpen && <GeneratePopover onClose={() => setGenOpen(false)} />}
       </footer>

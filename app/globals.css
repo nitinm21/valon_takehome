@@ -1144,6 +1144,36 @@ button {
   color: var(--muted);
 }
 
+/* In-editor theme selector (dropdown from the topbar Theme button) */
+.theme-anchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.theme-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.18);
+}
+
+.theme-popover-hint {
+  margin: -4px 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
 .theme-picker {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -2234,4 +2264,141 @@ button {
 
 .present-exit-btn:hover {
   opacity: 1;
+}
+
+/* ---- Sources panel (slide provenance) ----------------------------------- */
+/* Citations for agent-authored slides: which customer artifacts back the
+   numbers on the current slide, plus presenter notes. Lives in the bottombar
+   next to the AI trigger. */
+
+.sources-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.sources-trigger:hover,
+.sources-trigger.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(47, 109, 240, 0.12);
+}
+
+.sources-popover {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 440px;
+  max-width: calc(100vw - 48px);
+  max-height: 50vh;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  z-index: 60;
+}
+
+.sources-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sources-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.sources-close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px;
+}
+
+.sources-close:hover {
+  color: var(--ink);
+}
+
+.sources-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sources-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.sources-artifact {
+  display: inline-block;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(47, 109, 240, 0.08);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+.sources-quote {
+  margin: 8px 0 0;
+  padding-left: 10px;
+  border-left: 3px solid var(--border);
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-style: italic;
+  line-height: 1.45;
+}
+
+.sources-note {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.sources-notes {
+  margin-top: 14px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.sources-notes-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.sources-notes-text {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
 }

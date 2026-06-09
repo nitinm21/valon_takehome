@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { create } from "zustand";
 
+import { applyThemeToDeck } from "./applyTheme";
 import { DEFAULT_RUN_STYLE, runsText, type RunStyle } from "./richText";
 import type {
   Background,
@@ -165,6 +166,11 @@ type EditorState = {
   startEditing: (id: string) => void;
   clearJustAdded: () => void;
   setBackground: (background: Background) => void;
+  // Re-style EVERY slide to a curated theme (themes.ts) in place: rewrites
+  // backgrounds, text colors/fonts, surface cards, and data-viz colors while
+  // preserving geometry and text. Stamps the deck's themeId so the selector
+  // reflects the active theme. See applyTheme.ts for the restyle pass.
+  applyTheme: (themeId: string) => void;
 
   addSlide: () => void;
   // Insert a pre-built slide (e.g. AI-generated) and select it. Elements arrive
@@ -256,6 +262,9 @@ export const useEditor = create<EditorState>((set, get) => ({
     set((state) => ({
       deck: mapCurrentSlide(state.deck, (slide) => ({ ...slide, background }))
     })),
+
+  applyTheme: (themeId) =>
+    set((state) => ({ deck: applyThemeToDeck(state.deck, themeId) })),
 
   addSlide: () =>
     set((state) => {

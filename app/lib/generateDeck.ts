@@ -120,7 +120,8 @@ async function generateSlideViaApi(
 // can navigate to `/editor/<id>` and watch the slides stream in.
 export function startDeckGeneration(
   outline: Outline,
-  theme: ThemeSummary = defaultTheme()
+  theme: ThemeSummary = defaultTheme(),
+  themeId?: string
 ): string | null {
   const pending: Slide[] = outline.slides.map((slide) => ({
     id: uid(),
@@ -135,17 +136,21 @@ export function startDeckGeneration(
   }
 
   const deckId = uid();
-  useEditor.getState().replaceDeck({
+  const deck = {
     id: deckId,
     title: outline.deckTitle,
     slides: pending,
-    selectedSlideId: pending[0].id
-  });
+    selectedSlideId: pending[0].id,
+    // Record which theme styled the deck so the editor's theme selector reflects
+    // it and a later re-theme knows the prior surface color (see applyTheme.ts).
+    themeId
+  };
+  useEditor.getState().replaceDeck(deck);
 
-  // List the deck in the library right away (so it shows even if the user
-  // navigates home mid-generation); its full content is saved by the persistence
-  // subscription once every slide has streamed in.
-  registerDeck(deckId, outline.deckTitle, pending.length);
+  // Register the deck on the server right away (so it lists in the library even
+  // if the user navigates home mid-generation); its full content is saved by the
+  // persistence subscription once every slide has streamed in.
+  registerDeck(deck);
 
   outline.slides.forEach((slide, index) => {
     const slideId = pending[index].id;
