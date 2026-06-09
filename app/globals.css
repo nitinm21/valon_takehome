@@ -1129,6 +1129,86 @@ button {
   color: var(--muted);
 }
 
+/* ---- Theme picker (create flow) ---------------------------------------- */
+
+.outline-theme {
+  margin-bottom: 20px;
+}
+
+.outline-section-title {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.theme-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.theme-card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.theme-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  aspect-ratio: 16 / 10;
+  padding: 16px 18px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: box-shadow 120ms ease, transform 80ms ease;
+}
+
+.theme-card:hover .theme-tile {
+  transform: translateY(-1px);
+}
+
+.theme-card.selected .theme-tile {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.theme-tile-title {
+  font-size: 1.4rem;
+  line-height: 1.1;
+}
+
+.theme-tile-body {
+  font-size: 0.85rem;
+}
+
+.theme-name {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  padding-left: 2px;
+}
+
+.theme-card.selected .theme-name {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.theme-check {
+  color: var(--accent);
+  font-weight: 700;
+}
+
 /* ---- Slide rail (left) -------------------------------------------------- */
 
 .slide-rail {

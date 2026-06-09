@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { startDeckGeneration } from "../lib/generateDeck";
+import { DEFAULT_THEME_ID, getTheme } from "../lib/themes";
 import type { Outline } from "../lib/types";
 import { OutlineEditor } from "./OutlineEditor";
 
@@ -20,6 +21,7 @@ export function CreateDeck() {
   const [input, setInput] = useState("");
   const [slideCount, setSlideCount] = useState(DEFAULT_SLIDES);
   const [outline, setOutline] = useState<Outline | null>(null);
+  const [themeId, setThemeId] = useState(DEFAULT_THEME_ID);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -54,7 +56,7 @@ export function CreateDeck() {
     if (!outline) {
       return;
     }
-    const id = startDeckGeneration(outline);
+    const id = startDeckGeneration(outline, getTheme(themeId).summary);
     if (id) {
       router.push(`/editor/${id}`);
     }
@@ -68,7 +70,9 @@ export function CreateDeck() {
             onBack={() => setPhase("input")}
             onChange={setOutline}
             onGenerate={handleGenerateDeck}
+            onThemeSelect={setThemeId}
             outline={outline}
+            themeId={themeId}
           />
         </div>
       </main>

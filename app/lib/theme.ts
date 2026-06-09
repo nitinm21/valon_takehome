@@ -7,6 +7,7 @@
 // framework-free — no store/React imports — so it can run on the client today
 // and on the server (the future /api/generate-slide route) unchanged.
 
+import { DEFAULT_FONT_ID } from "./fonts";
 import type {
   Background,
   Deck,
@@ -25,6 +26,8 @@ export type ThemeSummary = {
   bodySize: number; // logical px
   titleBold: boolean;
   align: "left" | "center" | "right";
+  titleFont: string; // font id (lib/fonts.ts) for titles
+  bodyFont: string; // font id for body copy
 };
 
 const DEFAULT_BG: Background = { type: "solid", color: "#ffffff" };
@@ -183,6 +186,27 @@ function modeColor(runs: TextRun[]): string | null {
   return best;
 }
 
+// Most-used run font (defined ones only), so a derived theme keeps the deck's
+// typography. Null when no run names a font (legacy decks default to Inter).
+function modeFont(runs: TextRun[]): string | null {
+  const counts = new Map<string, number>();
+  for (const run of runs) {
+    if (!run.text.trim() || !run.fontFamily) {
+      continue;
+    }
+    counts.set(run.fontFamily, (counts.get(run.fontFamily) ?? 0) + 1);
+  }
+  let best: string | null = null;
+  let n = 0;
+  for (const [font, k] of counts) {
+    if (k > n) {
+      n = k;
+      best = font;
+    }
+  }
+  return best;
+}
+
 function distinctColors(deck: Deck): string[] {
   const set = new Set<string>();
   for (const slide of deck.slides) {
@@ -244,6 +268,8 @@ export function deriveTheme(deck: Deck): ThemeSummary {
     titleSize,
     bodySize: Math.min(bodySize, titleSize),
     titleBold: titleRun?.bold ?? true,
-    align: dominantAlign(texts)
+    align: dominantAlign(texts),
+    titleFont: titleRun?.fontFamily ?? DEFAULT_FONT_ID,
+    bodyFont: modeFont(runs) ?? DEFAULT_FONT_ID
   };
 }

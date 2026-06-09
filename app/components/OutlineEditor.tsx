@@ -1,6 +1,7 @@
 "use client";
 
 import type { Outline, OutlineLayout } from "../lib/types";
+import { ThemePicker } from "./ThemePicker";
 
 // The editable deck outline. Users tweak titles + bullet points, add/remove/
 // reorder slides, and (optionally) override the auto-assigned layout, then hit
@@ -28,12 +29,16 @@ export function OutlineEditor({
   outline,
   onChange,
   onBack,
-  onGenerate
+  onGenerate,
+  themeId,
+  onThemeSelect
 }: {
   outline: Outline;
   onChange: (next: Outline) => void;
   onBack: () => void;
   onGenerate: () => void;
+  themeId: string;
+  onThemeSelect: (id: string) => void;
 }) {
   const slides = outline.slides;
 
@@ -132,6 +137,11 @@ export function OutlineEditor({
           {slides.length} slide{slides.length === 1 ? "" : "s"}
         </span>
       </div>
+
+      <section className="outline-theme">
+        <h3 className="outline-section-title">Theme</h3>
+        <ThemePicker onSelect={onThemeSelect} selectedId={themeId} />
+      </section>
 
       <div className="outline-list">
         {slides.map((slide, index) => {

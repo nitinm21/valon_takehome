@@ -118,9 +118,10 @@ async function generateSlideViaApi(
 // Build the pending deck, swap it in, and fire all the per-slide fills. Returns
 // the new deck's id immediately (fills resolve in the background) so the caller
 // can navigate to `/editor/<id>` and watch the slides stream in.
-export function startDeckGeneration(outline: Outline): string | null {
-  const theme = defaultTheme();
-
+export function startDeckGeneration(
+  outline: Outline,
+  theme: ThemeSummary = defaultTheme()
+): string | null {
   const pending: Slide[] = outline.slides.map((slide) => ({
     id: uid(),
     background: theme.background,

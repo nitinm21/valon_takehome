@@ -141,7 +141,8 @@ function textElement(
   fontSize: number,
   color: string,
   bold: boolean,
-  align: TextElement["align"]
+  align: TextElement["align"],
+  fontFamily: string
 ): TextElement {
   return {
     id: uid(),
@@ -153,7 +154,7 @@ function textElement(
     rotation: 0,
     z: 0,
     align,
-    runs: [{ text, fontSize, color, bold, italic: false }]
+    runs: [{ text, fontSize, color, bold, italic: false, fontFamily }]
   };
 }
 
@@ -175,7 +176,8 @@ function buildText(
     fontSize,
     color,
     isTitle ? theme.titleBold : false,
-    isTitle ? theme.align : "left"
+    isTitle ? theme.align : "left",
+    isTitle ? theme.titleFont : theme.bodyFont
   );
 }
 
@@ -245,7 +247,8 @@ function buildBox(
         size,
         pickReadableColor(cardBg, theme.titleColor),
         true,
-        "left"
+        "left",
+        theme.titleFont
       )
     );
     cursorY += BOX_HEADING_H + BOX_GAP;
@@ -260,7 +263,8 @@ function buildBox(
         size,
         pickReadableColor(cardBg, theme.bodyColor),
         false,
-        "left"
+        "left",
+        theme.bodyFont
       )
     );
   }
@@ -295,7 +299,8 @@ function buildCover(
         size,
         pickReadableColor(background, theme.titleColor),
         true,
-        "center"
+        "center",
+        theme.titleFont
       )
     );
   }
@@ -316,7 +321,8 @@ function buildCover(
         size,
         pickReadableColor(background, theme.bodyColor),
         false,
-        "center"
+        "center",
+        theme.bodyFont
       )
     );
   }
