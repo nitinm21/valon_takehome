@@ -30,7 +30,6 @@ export function DeckLibrary() {
   return (
     <main className="library-shell">
       <header className="library-header">
-        <span className="brand-mark">Valon</span>
         <button
           className="btn btn-primary btn-lg"
           onClick={() => router.push("/create")}

@@ -57,20 +57,29 @@ export function SlideRail() {
             onDrop={() => handleDrop(index)}
           >
             <span className="rail-num">{index + 1}</span>
-            <SlideThumb slide={slide} />
-            {canDelete && (
-              <button
-                aria-label={`Delete slide ${index + 1}`}
-                className="rail-delete"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  deleteSlide(slide.id);
-                }}
-                type="button"
-              >
-                ×
-              </button>
-            )}
+            <div className="rail-thumb-wrap">
+              <SlideThumb slide={slide} />
+              {canDelete && (
+                <button
+                  aria-label={`Delete slide ${index + 1}`}
+                  className="rail-delete"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    deleteSlide(slide.id);
+                  }}
+                  type="button"
+                >
+                  <svg viewBox="0 0 12 12" aria-hidden focusable="false">
+                    <path
+                      d="M3 3 L9 9 M9 3 L3 9"
+                      stroke="currentColor"
+                      strokeWidth="1.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
           </div>
         ))}
       </div>

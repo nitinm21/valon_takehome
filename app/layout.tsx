@@ -53,7 +53,7 @@ const fontVariables = [
   .join(" ");
 
 export const metadata: Metadata = {
-  title: "Valon Slides",
+  title: "AI Slides",
   description: "A fluid slide editor."
 };
 

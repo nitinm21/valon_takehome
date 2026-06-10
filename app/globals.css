@@ -1308,10 +1308,16 @@ button {
   box-shadow: 0 -2px 0 var(--accent);
 }
 
+.rail-thumb-wrap {
+  position: relative;
+  flex-shrink: 0;
+  line-height: 0;
+}
+
 .rail-delete {
   position: absolute;
-  top: 6px;
-  right: 6px;
+  top: 4px;
+  right: 4px;
   width: 18px;
   height: 18px;
   display: grid;
@@ -1320,10 +1326,15 @@ button {
   border-radius: 50%;
   background: rgba(15, 23, 42, 0.6);
   color: #fff;
-  font-size: 0.9rem;
-  line-height: 1;
+  padding: 0;
   opacity: 0;
   transition: opacity 120ms ease;
+}
+
+.rail-delete svg {
+  width: 10px;
+  height: 10px;
+  display: block;
 }
 
 .rail-item:hover .rail-delete {
@@ -1941,7 +1952,7 @@ button {
 .library-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: 18px 32px;
   border-bottom: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.7);
@@ -1949,10 +1960,6 @@ button {
   position: sticky;
   top: 0;
   z-index: 10;
-}
-
-.library-header .brand-mark {
-  font-size: 1.15rem;
 }
 
 .library-body {
