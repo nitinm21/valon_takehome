@@ -212,6 +212,8 @@ function sameStyle(a: RunStyle, b: RunStyle): boolean {
 
 // Walk every text node in document order, resolve its effective style, and merge
 // adjacent runs that share a style. Newlines are preserved as "\n" inside text.
+// <br> elements (inserted by insertLineBreak on Enter) are treated as "\n" so
+// they survive the commit cycle — SHOW_TEXT alone skips element nodes entirely.
 export function serializeDomToRuns(
   root: HTMLElement,
   fallback: RunStyle
@@ -229,10 +231,27 @@ export function serializeDomToRuns(
     }
   };
 
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const walker = document.createTreeWalker(
+    root,
+    NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+    {
+      acceptNode(node: Node) {
+        if (node.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT;
+        if (node instanceof HTMLElement && node.tagName === "BR") return NodeFilter.FILTER_ACCEPT;
+        // Skip the element itself but still descend into its children (spans, etc.)
+        return NodeFilter.FILTER_SKIP;
+      }
+    }
+  );
+
   let node = walker.nextNode();
   while (node) {
-    push(node.textContent ?? "", computeStyle(node, root, fallback));
+    if (node.nodeType === Node.TEXT_NODE) {
+      push(node.textContent ?? "", computeStyle(node, root, fallback));
+    } else {
+      // <br> element → newline, inherit style from surrounding context
+      push("\n", computeStyle(node, root, fallback));
+    }
     node = walker.nextNode();
   }
   return runs;
