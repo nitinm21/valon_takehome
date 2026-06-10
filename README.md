@@ -1,13 +1,6 @@
 # Valon Takehome 
 
-An AI-native slide editor — built to be driven by **AI agents**, not just clicks.
-
-The headline workflow: a Valon deployment strategist runs `/weekly-deck cascade-fcu`
-in Claude Code, and the agent mines that customer's deployment artifacts
-(`samples/customers/`), authors a citation-grounded weekly client review —
-KPI cards, real charts, milestone tables — and the deck appears in the library
-ready to present. Feedback like *"refine slide 3: lead with the escrow milestone"*
-patches the deck through the API and shows up live in the open editor.
+A slide editor — built to be driven by both human users and AI agents.
 
 - **Agent API & deck schema:** see [`AGENTS.md`](AGENTS.md)
 - **Claude Code plugin** (`/weekly-deck`, `/deck-status`): see [`plugin/`](plugin/)
@@ -50,22 +43,7 @@ GOOGLE_API_KEY=paste_your_key_here
 npm run dev
 ```
 
-Open **[http://localhost:3000](http://localhost:3000)**. That's it.
-
----
-
-## Environment variables
-
-`.env.local` is git-ignored, so your key stays out of version control.
-
-| Variable             | Required | Default                         | Purpose                                              |
-| -------------------- | -------- | ------------------------------- | ---------------------------------------------------- |
-| `GOOGLE_API_KEY`     | **Yes**  | —                               | Authenticates all Gemini requests.                   |
-| `GOOGLE_IMAGE_MODEL` | No       | `gemini-3-pro-image-preview`    | Model used for slide image generation.               |
-| `GOOGLE_SLIDE_MODEL` | No       | `gemini-2.5-flash`              | Model used for outline / slide text generation.      |
-
-The API key is read only in server-side API routes (`app/api/*`) and is never
-exposed to the browser.
+Open **[http://localhost:3000](http://localhost:3000)**. That's it. Ensure port 3000 is free.
 
 ---
 
@@ -111,7 +89,24 @@ exposed to the browser.
 
 ### Using it from Claude Code
 
-From this repo (with `npm run dev` running), install the plugin and run:
+The repo doubles as a Claude Code plugin marketplace (`valon-slides`), which adds
+the `/weekly-deck` and `/deck-status` slash commands. The plugin is a separate
+install from the app — it lives in your Claude Code, not in this repo, so `npm
+run dev` alone does **not** add the commands. You need both: the app running and
+the plugin installed.
+
+**Install the plugin** — inside Claude Code CLI, run:
+
+```
+/plugin marketplace add nitinm21/valon_takehome
+/plugin install valon-slides@valon-slides
+```
+
+(Already cloned the repo? You can point the marketplace at the local path instead:
+`/plugin marketplace add /absolute/path/to/valon_takehome`. Or just run `/plugin`
+for the interactive menu.)
+
+**Use it** — with `npm run dev` running, run:
 
 ```
 /weekly-deck cascade-fcu
@@ -119,6 +114,8 @@ From this repo (with `npm run dev` running), install the plugin and run:
 
 The agent reads the customer bundle, finds last week's deck for continuity,
 authors this week's review with per-slide citations, and replies with the
-editor link. Then iterate conversationally: `refine slide 3: ...`.
+editor link. Then iterate conversationally. The commands
+talk to the app at `http://localhost:3000` (override with `$VALON_SLIDES_URL`),
+and will tell you to start the app first if it isn't running.
 
 
