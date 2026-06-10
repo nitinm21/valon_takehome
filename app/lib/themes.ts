@@ -72,6 +72,24 @@ export const THEMES: DeckTheme[] = [
     })
   },
   {
+    // Bespoke, customer-grounded review theme. Fidelity CU's own brand is a
+    // navy + gold palette ("bear-paw mark", refreshed 2025) per their tenant
+    // config — so a deck for them wears their identity, not generic Valon blue.
+    // Editorial pairing: a deep-navy serif headline (Lora) over clean sans data
+    // (Inter), on a warm paper ground, with a brand-gold data-viz accent.
+    id: "fidelity-review",
+    name: "Fidelity Review",
+    useCase: "Fidelity CU — brand-grounded client review",
+    summary: make({
+      background: solid("#FBFAF7"),
+      titleColor: "#0B2545",
+      bodyColor: "#48566B",
+      titleFont: "lora",
+      bodyFont: "inter",
+      accent: "#B5851A"
+    })
+  },
+  {
     id: "executive-update",
     name: "Executive Update",
     useCase: "Board / leadership reviews",

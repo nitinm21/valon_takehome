@@ -7,8 +7,9 @@ import {
   readDeck,
   writeDeck
 } from "../../../lib/server/deckRepo";
+import { applyThemeToDeck } from "../../../lib/applyTheme";
 import { deriveTheme, type ThemeSummary } from "../../../lib/theme";
-import { getTheme } from "../../../lib/themes";
+import { getTheme, THEMES } from "../../../lib/themes";
 import type { Deck, Slide, SlideElement } from "../../../lib/types";
 
 // Single-deck API.
@@ -151,6 +152,22 @@ export async function PATCH(request: Request, { params }: Params) {
           return;
         }
         working.title = rawOp.title.trim();
+        return;
+      }
+      case "setTheme": {
+        // Restyle the whole deck to a curated theme — the agent-facing twin of
+        // the editor's theme selector. Backgrounds, text colors/fonts, and
+        // data-viz colors are rewritten in place; geometry and content are kept.
+        const themeId = typeof rawOp.themeId === "string" ? rawOp.themeId.trim() : "";
+        if (!THEMES.some((t) => t.id === themeId)) {
+          errors.push(
+            `${path}.themeId must be one of: ${THEMES.map((t) => t.id).join(", ")}.`
+          );
+          return;
+        }
+        const restyled = applyThemeToDeck(working, themeId);
+        working.themeId = restyled.themeId;
+        working.slides = restyled.slides;
         return;
       }
       case "replaceSlide": {
