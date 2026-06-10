@@ -10,22 +10,31 @@ A slide editor — built to be driven by both human users and AI agents.
 
 ## Quick start
 
-> **Prerequisites:** [Node.js 20+](https://nodejs.org) (LTS recommended) and npm.
-> Check with `node -v`.
+> **Prerequisites:** [Node.js 20+](https://nodejs.org)
+> (LTS recommended). Check with `node -v`.
 
-**1. Install dependencies**
+**1. Clone the repo**
+
+```bash
+git clone https://github.com/nitinm21/valon_takehome.git
+cd valon_takehome
+```
+
+Run the remaining steps from inside this folder.
+
+**2. Install dependencies**
 
 ```bash
 npm install
 ```
 
-**2. Create your local env file from the template**
+**3. Create your local env file from the template**
 
 ```bash
 cp .env.example .env.local
 ```
 
-**3. Add your Google AI API key**
+**4. Add your Google AI API key**
 
 This app uses Google's Gemini models. Create a free key here:
 
@@ -37,13 +46,36 @@ Open `.env.local` and paste it in:
 GOOGLE_API_KEY=paste_your_key_here
 ```
 
-**4. Start the app**
+**5. Start the app**
 
 ```bash
 npm run dev
 ```
 
 Open **[http://localhost:3000](http://localhost:3000)**. That's it. Ensure port 3000 is free.
+
+---
+### Install the Claude Code plugin
+
+**1. Open a new terminal tab and launch Claude Code from the repo root** (`claude`), then install the plugin.
+
+```
+/plugin marketplace add nitinm21/valon_takehome
+/plugin install valon-slides@valon-slides
+```
+
+**2. Build a deck**:
+
+```
+/weekly-deck cascade-fcu
+```
+> The slash command needs to be typed in, so it reads like "/valon-slides:weekly-deck" in your terminal. Do not copy.
+
+The agent reads the customer bundle, finds last week's deck for continuity,
+authors this week's review with per-slide citations, and replies with the editor
+link. Then iterate conversationally. The commands talk to the app at
+`http://localhost:3000` (override with `$VALON_SLIDES_URL`) and will tell you to
+start the app first if it isn't running.
 
 ---
 
@@ -87,35 +119,6 @@ Open **[http://localhost:3000](http://localhost:3000)**. That's it. Ensure port 
   patch ops. Full reference in [`AGENTS.md`](AGENTS.md).
 - **Export** — download the current deck as a `.pptx` file.
 
-### Using it from Claude Code
 
-The repo doubles as a Claude Code plugin marketplace (`valon-slides`), which adds
-the `/weekly-deck` and `/deck-status` slash commands. The plugin is a separate
-install from the app — it lives in your Claude Code, not in this repo, so `npm
-run dev` alone does **not** add the commands. You need both: the app running and
-the plugin installed.
-
-**Install the plugin** — inside Claude Code CLI, run:
-
-```
-/plugin marketplace add nitinm21/valon_takehome
-/plugin install valon-slides@valon-slides
-```
-
-(Already cloned the repo? You can point the marketplace at the local path instead:
-`/plugin marketplace add /absolute/path/to/valon_takehome`. Or just run `/plugin`
-for the interactive menu.)
-
-**Use it** — with `npm run dev` running, run:
-
-```
-/weekly-deck cascade-fcu
-```
-
-The agent reads the customer bundle, finds last week's deck for continuity,
-authors this week's review with per-slide citations, and replies with the
-editor link. Then iterate conversationally. The commands
-talk to the app at `http://localhost:3000` (override with `$VALON_SLIDES_URL`),
-and will tell you to start the app first if it isn't running.
 
 
