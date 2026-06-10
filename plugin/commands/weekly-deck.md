@@ -109,11 +109,7 @@ Deck ready: <base>/editor/<id>   (<n> slides)
 
 The week in one breath: <2-3 sentences — the narrative you chose and why>
 
-Review it in the editor (it live-updates), then:
-  - "refine slide 3: lead with the escrow milestone"
-  - "add a slide comparing ticket volume to last month"
-  - "remove slide 5"
-Present with ▶ in the editor; export .pptx from the topbar.
+Review it in the editor or ask me to edit it!
 ```
 
 ## Step 8 — The refine loop
