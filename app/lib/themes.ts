@@ -52,7 +52,8 @@ function make(opts: {
     titleBold: true,
     align: "left",
     titleFont: opts.titleFont,
-    bodyFont: opts.bodyFont
+    bodyFont: opts.bodyFont,
+    accent: opts.accent
   };
 }
 

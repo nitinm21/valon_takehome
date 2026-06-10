@@ -32,9 +32,13 @@ function buildPayload() {
               type: "image" as const,
               data: gradientDataUrl(slide.background.from, slide.background.to)
             },
-      // Skip empty image boxes (no generated picture yet).
+      // Skip empty image boxes (no generated picture yet) and data-viz elements
+      // (kpi/chart/table render in-app and in present mode; pptx export of them
+      // is out of scope).
       elements: slide.elements.filter(
-        (el) => el.type !== "image" || Boolean(el.src)
+        (el) =>
+          (el.type === "text" || el.type === "shape" || el.type === "image") &&
+          (el.type !== "image" || Boolean(el.src))
       )
     }))
   };

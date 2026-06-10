@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 
 import { ARTBOARD_H, ARTBOARD_W, GRADIENT_ANGLE } from "../lib/store";
 import type { Background, Slide, SlideElement } from "../lib/types";
+import { DataVizView } from "./DataVizViews";
 
 export const THUMB_W = 160;
 export const THUMB_H = (THUMB_W * ARTBOARD_H) / ARTBOARD_W; // 90 at 16:9
@@ -68,6 +69,14 @@ function ThumbElement({ element }: { element: SlideElement }) {
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         )}
+      </div>
+    );
+  }
+
+  if (element.type === "kpi" || element.type === "chart" || element.type === "table") {
+    return (
+      <div style={frame}>
+        <DataVizView element={element} />
       </div>
     );
   }

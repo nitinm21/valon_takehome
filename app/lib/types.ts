@@ -49,7 +49,60 @@ export type ShapeElement = Geometry & {
   radius?: number;
 };
 
-export type SlideElement = TextElement | ImageElement | ShapeElement;
+// ---- data-viz elements ------------------------------------------------------
+// First-class data elements so agent-authored decks can show numbers as visuals
+// instead of prose. Styling fields (color/surface/accent) are filled by
+// buildSlide from the deck theme; renderers fall back to sensible defaults.
+
+export type KpiElement = Geometry & {
+  id: string;
+  type: "kpi";
+  label: string; // metric name, e.g. "ACH timeout rate"
+  value: string; // headline figure, e.g. "0.8%"
+  delta?: string; // change vs last period, e.g. "-40% WoW"
+  trend?: "up" | "down" | "flat";
+  good?: boolean; // is the trend favorable? (drives green/red)
+  color?: string; // value/label text color
+  surface?: string; // card background
+  accent?: string;
+};
+
+export type ChartSeries = {
+  name?: string;
+  color?: string;
+  values: number[]; // one value per label, same order
+};
+
+export type ChartElement = Geometry & {
+  id: string;
+  type: "chart";
+  chartType: "bar" | "line";
+  labels: string[]; // x-axis categories, e.g. ["W19", "W20", "W21", "W22"]
+  series: ChartSeries[];
+  yLabel?: string;
+  color?: string; // axis/label text color
+  surface?: string;
+  accent?: string;
+};
+
+export type TableElement = Geometry & {
+  id: string;
+  type: "table";
+  columns: string[];
+  rows: string[][];
+  color?: string;
+  headerColor?: string;
+  surface?: string;
+  accent?: string;
+};
+
+export type SlideElement =
+  | TextElement
+  | ImageElement
+  | ShapeElement
+  | KpiElement
+  | ChartElement
+  | TableElement;
 
 export type Background =
   | { type: "solid"; color: string }
@@ -64,11 +117,23 @@ export type SlideSource = {
   slots: Record<string, { text?: string; prompt?: string; heading?: string }>;
 };
 
+// Where a slide's claims come from. Agent-authored decks cite the customer
+// artifacts (file + lines) that back each number, so a strategist can spot-check
+// instead of re-deriving the analysis. Surfaced by the editor's sources badge.
+export type Citation = {
+  artifact: string; // path within the customer bundle, e.g. "usage_telemetry.csv"
+  lines?: string; // line range in that file, e.g. "12-18"
+  quote?: string; // short excerpt backing the claim
+  note?: string; // why this supports the slide
+};
+
 export type Slide = {
   id: string;
   background: Background;
   elements: SlideElement[];
   source?: SlideSource;
+  citations?: Citation[];
+  notes?: string; // speaker notes (agent-authored context for the presenter)
   // Set while an AI-generated deck is streaming in: the slide exists (so it shows
   // in the rail and can be navigated to) but its content hasn't arrived yet, so
   // the editor renders a skeleton/spinner. `pendingTitle` is the outline title
@@ -82,6 +147,12 @@ export type Deck = {
   title: string;
   slides: Slide[];
   selectedSlideId: string;
+  // Set on agent-authored decks: which customer the deck reports on and which
+  // curated theme it was built with. Server persistence stamps the timestamps.
+  customer?: string;
+  themeId?: string;
+  createdAt?: number;
+  updatedAt?: number;
 };
 
 // ---- deck-creation outline ------------------------------------------------

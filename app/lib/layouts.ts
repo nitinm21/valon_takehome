@@ -13,15 +13,22 @@
 import { pickReadableColor, type ThemeSummary } from "./theme";
 import type {
   Background,
+  ChartElement,
   ImageElement,
+  KpiElement,
   ShapeElement,
   SlideElement,
+  TableElement,
   TextElement
 } from "./types";
 
 type Rect = { x: number; y: number; w: number; h: number };
-type SlotRole = "title" | "body" | "image" | "box";
-type Slot = { role: SlotRole; type: "text" | "image" | "box"; rect: Rect };
+type SlotRole = "title" | "body" | "image" | "box" | "kpi" | "chart" | "table";
+type Slot = {
+  role: SlotRole;
+  type: "text" | "image" | "box" | "kpi" | "chart" | "table";
+  rect: Rect;
+};
 
 export type Template = {
   id: string;
@@ -29,7 +36,31 @@ export type Template = {
   slots: Record<string, Slot>;
 };
 
-export type SlotContent = { text?: string; prompt?: string; heading?: string };
+// Structured payloads for the data-viz slots. These are what the agent authors —
+// pure data, no geometry or colors (buildSlide applies the theme).
+export type KpiContent = {
+  label: string;
+  value: string;
+  delta?: string;
+  trend?: "up" | "down" | "flat";
+  good?: boolean;
+};
+export type ChartContent = {
+  chartType: "bar" | "line";
+  labels: string[];
+  series: { name?: string; values: number[] }[];
+  yLabel?: string;
+};
+export type TableContent = { columns: string[]; rows: string[][] };
+
+export type SlotContent = {
+  text?: string;
+  prompt?: string;
+  heading?: string;
+  kpi?: KpiContent;
+  chart?: ChartContent;
+  table?: TableContent;
+};
 export type SlideContent = Record<string, SlotContent>;
 export type GeneratedSlide = { background: Background; elements: SlideElement[] };
 
@@ -82,13 +113,54 @@ export const TEMPLATES: Record<string, Template> = {
       title: { role: "title", type: "text", rect: { x: 650, y: 110, w: 550, h: 120 } },
       body: { role: "body", type: "text", rect: { x: 650, y: 260, w: 550, h: 360 } }
     }
+  },
+  // ---- data-viz templates (agent-authored deployment reviews) --------------
+  // The kpi1-4 rects are defaults for a full row; buildSlide redistributes the
+  // row across however many KPIs are actually provided (1-4) so a 3-KPI slide
+  // doesn't leave a hole on the right.
+  kpis: {
+    id: "kpis",
+    name: "KPI row",
+    slots: {
+      title: { role: "title", type: "text", rect: { x: 80, y: 70, w: 1120, h: 110 } },
+      kpi1: { role: "kpi", type: "kpi", rect: { x: 80, y: 240, w: 262, h: 260 } },
+      kpi2: { role: "kpi", type: "kpi", rect: { x: 366, y: 240, w: 262, h: 260 } },
+      kpi3: { role: "kpi", type: "kpi", rect: { x: 652, y: 240, w: 262, h: 260 } },
+      kpi4: { role: "kpi", type: "kpi", rect: { x: 938, y: 240, w: 262, h: 260 } },
+      context: { role: "body", type: "text", rect: { x: 80, y: 548, w: 1120, h: 100 } }
+    }
+  },
+  chart: {
+    id: "chart",
+    name: "Chart with takeaway",
+    slots: {
+      title: { role: "title", type: "text", rect: { x: 80, y: 70, w: 1120, h: 110 } },
+      chart: { role: "chart", type: "chart", rect: { x: 80, y: 220, w: 700, h: 430 } },
+      body: { role: "body", type: "text", rect: { x: 820, y: 240, w: 380, h: 390 } }
+    }
+  },
+  table: {
+    id: "table",
+    name: "Table",
+    slots: {
+      title: { role: "title", type: "text", rect: { x: 80, y: 70, w: 1120, h: 110 } },
+      table: { role: "table", type: "table", rect: { x: 80, y: 210, w: 1120, h: 380 } },
+      note: { role: "body", type: "text", rect: { x: 80, y: 612, w: 1120, h: 60 } }
+    }
   }
 };
 
 export const TEMPLATE_IDS = Object.keys(TEMPLATES);
+// Data-viz layouts are agent-only: they are authored through the deck API with
+// REAL series/values from customer artifacts. The in-app LLM flow never picks
+// them — a model invents numbers, an agent cites them.
+export const DATA_TEMPLATE_IDS = ["kpis", "chart", "table"];
 // Content layouts only — excludes the cover, which is reserved for slide 1 of a
-// generated deck. The magic picker and the deck planner choose from these.
-export const CONTENT_TEMPLATE_IDS = TEMPLATE_IDS.filter((id) => id !== "cover");
+// generated deck, and the data-viz templates above. The magic picker and the
+// deck planner choose from these.
+export const CONTENT_TEMPLATE_IDS = TEMPLATE_IDS.filter(
+  (id) => id !== "cover" && !DATA_TEMPLATE_IDS.includes(id)
+);
 export const DEFAULT_TEMPLATE = "paragraph";
 
 function uid(): string {
@@ -329,6 +401,93 @@ function buildCover(
   return out;
 }
 
+// ---- data-viz builders ------------------------------------------------------
+// Styling comes from the theme here (not from the agent): surface cards match
+// the Boxes style, text colors pass the same WCAG pick, and the accent drives
+// chart series / KPI deltas. The agent supplies only data.
+
+const DEFAULT_ACCENT = "#2F6DF0";
+
+function buildKpi(rect: Rect, content: KpiContent, theme: ThemeSummary): KpiElement {
+  const cardBg: Background = { type: "solid", color: theme.surfaceColor };
+  return {
+    id: uid(),
+    type: "kpi",
+    label: content.label,
+    value: content.value,
+    delta: content.delta,
+    trend: content.trend,
+    good: content.good,
+    color: pickReadableColor(cardBg, theme.titleColor),
+    surface: theme.surfaceColor,
+    accent: theme.accent ?? DEFAULT_ACCENT,
+    x: rect.x,
+    y: rect.y,
+    w: rect.w,
+    h: rect.h,
+    rotation: 0,
+    z: 0
+  };
+}
+
+function buildChart(slot: Slot, content: ChartContent, theme: ThemeSummary): ChartElement {
+  const cardBg: Background = { type: "solid", color: theme.surfaceColor };
+  return {
+    id: uid(),
+    type: "chart",
+    chartType: content.chartType,
+    labels: content.labels,
+    series: content.series.map((s) => ({ name: s.name, values: s.values })),
+    yLabel: content.yLabel,
+    color: pickReadableColor(cardBg, theme.bodyColor),
+    surface: theme.surfaceColor,
+    accent: theme.accent ?? DEFAULT_ACCENT,
+    x: slot.rect.x,
+    y: slot.rect.y,
+    w: slot.rect.w,
+    h: slot.rect.h,
+    rotation: 0,
+    z: 0
+  };
+}
+
+function buildTable(slot: Slot, content: TableContent, theme: ThemeSummary): TableElement {
+  const cardBg: Background = { type: "solid", color: theme.surfaceColor };
+  return {
+    id: uid(),
+    type: "table",
+    columns: content.columns,
+    rows: content.rows,
+    color: pickReadableColor(cardBg, theme.bodyColor),
+    headerColor: pickReadableColor(cardBg, theme.titleColor),
+    surface: theme.surfaceColor,
+    accent: theme.accent ?? DEFAULT_ACCENT,
+    x: slot.rect.x,
+    y: slot.rect.y,
+    w: slot.rect.w,
+    h: slot.rect.h,
+    rotation: 0,
+    z: 0
+  };
+}
+
+// Redistribute the KPI row across however many KPIs were provided (1-4): the
+// declared kpi1-4 rects assume a full row; fewer cards widen to fill it.
+const KPI_ROW = { x: 80, w: 1120, gap: 24 };
+
+function kpiRects(count: number, template: Template): Rect[] {
+  const sample = Object.values(template.slots).find((slot) => slot.role === "kpi");
+  const y = sample?.rect.y ?? 240;
+  const h = sample?.rect.h ?? 260;
+  const w = Math.round((KPI_ROW.w - KPI_ROW.gap * (count - 1)) / count);
+  return Array.from({ length: count }, (_, i) => ({
+    x: KPI_ROW.x + i * (w + KPI_ROW.gap),
+    y,
+    w,
+    h
+  }));
+}
+
 // Turn newline-separated points into bullet lines (markers added here so the LLM
 // just returns plain points).
 function bulletize(text: string): string {
@@ -361,13 +520,35 @@ export function buildSlide(
     return { background, elements: coverElements };
   }
 
+  // KPI slots are laid out as a group (so 1-4 cards always fill the row evenly).
+  const kpiContents = Object.entries(template.slots)
+    .filter(([name, slot]) => slot.role === "kpi" && content[name]?.kpi)
+    .map(([name]) => content[name].kpi as KpiContent);
+  if (kpiContents.length > 0) {
+    const rects = kpiRects(kpiContents.length, template);
+    kpiContents.forEach((kpi, index) => {
+      elements.push(buildKpi(rects[index], kpi, theme));
+    });
+  }
+
   for (const [name, slot] of Object.entries(template.slots)) {
     const c = content[name];
     if (!c) {
       continue;
     }
+    if (slot.role === "kpi") {
+      continue; // handled above as a group
+    }
     if (slot.role === "box") {
       elements.push(...buildBox(slot, c, theme));
+    } else if (slot.role === "chart") {
+      if (c.chart) {
+        elements.push(buildChart(slot, c.chart, theme));
+      }
+    } else if (slot.role === "table") {
+      if (c.table) {
+        elements.push(buildTable(slot, c.table, theme));
+      }
     } else if (slot.type === "image") {
       elements.push(buildImage(slot, c.prompt?.trim() ?? ""));
     } else {

@@ -8,3 +8,5 @@ tsconfig.tsbuildinfo
 .claude
 .playwright-mcp
 IMPLEMENTATION_PLAN.md
+# Server-side deck storage (user data, not source)
+data/

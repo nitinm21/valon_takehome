@@ -28,6 +28,8 @@ export type ThemeSummary = {
   align: "left" | "center" | "right";
   titleFont: string; // font id (lib/fonts.ts) for titles
   bodyFont: string; // font id for body copy
+  accent?: string; // highlight color for data-viz (charts/KPI deltas); curated
+  // themes set it, derived themes leave it for renderers to default
 };
 
 const DEFAULT_BG: Background = { type: "solid", color: "#ffffff" };

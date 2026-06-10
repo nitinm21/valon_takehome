@@ -20,6 +20,7 @@ import {
 } from "../lib/richText";
 import { useEditor } from "../lib/store";
 import type { SlideElement } from "../lib/types";
+import { DataVizView } from "./DataVizViews";
 import { ImageElementView } from "./ImageElementView";
 
 // Insert plain text (incl. "\n") at the caret as a single text node so the DOM
@@ -271,6 +272,20 @@ export function ElementView({ element }: { element: SlideElement }) {
 
   if (element.type === "image") {
     return <ImageElementView element={element} />;
+  }
+
+  // Data-viz elements (kpi/chart/table): content is agent-authored via the deck
+  // API; in the editor the box is selectable/movable/resizable like any element.
+  if (element.type === "kpi" || element.type === "chart" || element.type === "table") {
+    return (
+      <div
+        data-el-id={element.id}
+        onMouseDown={() => select(element.id)}
+        style={frame}
+      >
+        <DataVizView element={element} />
+      </div>
+    );
   }
 
   // shape — Phase 4

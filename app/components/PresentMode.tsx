@@ -4,6 +4,7 @@ import { type CSSProperties, useCallback, useEffect, useRef, useState } from "re
 
 import { ARTBOARD_H, ARTBOARD_W, GRADIENT_ANGLE } from "../lib/store";
 import type { Background, Slide, SlideElement } from "../lib/types";
+import { DataVizView } from "./DataVizViews";
 
 function backgroundCss(bg: Background) {
   return bg.type === "solid"
@@ -64,6 +65,14 @@ function PresentElement({ element }: { element: SlideElement }) {
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         )}
+      </div>
+    );
+  }
+
+  if (element.type === "kpi" || element.type === "chart" || element.type === "table") {
+    return (
+      <div style={frame}>
+        <DataVizView element={element} />
       </div>
     );
   }

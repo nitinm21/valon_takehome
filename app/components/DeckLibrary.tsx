@@ -3,31 +3,26 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { deleteDeck, listDecks, loadDeckRaw, type DeckMeta } from "../lib/deckStore";
-import type { Slide } from "../lib/types";
+import { deleteDeck, listDecks, type DeckEntry } from "../lib/deckStore";
 import { DeckCard } from "./DeckCard";
 
-type Entry = { meta: DeckMeta; firstSlide: Slide | null };
-
 // Home screen: a gallery of previously generated decks + a "Create Slide Deck"
-// entry point. localStorage reads happen on mount (client only), so the first
-// paint shows nothing until `entries` is populated (avoids hydration mismatch).
+// entry point. Decks come from the server (/api/decks) — which is also where
+// agents create them — so the list refreshes on focus: switch back from the
+// terminal after a /weekly-deck run and the new deck is here.
 export function DeckLibrary() {
   const router = useRouter();
-  const [entries, setEntries] = useState<Entry[] | null>(null);
+  const [entries, setEntries] = useState<DeckEntry[] | null>(null);
 
-  function refresh() {
-    const metas = listDecks();
-    setEntries(
-      metas.map((meta) => ({
-        meta,
-        firstSlide: loadDeckRaw(meta.id)?.slides[0] ?? null
-      }))
-    );
+  async function refresh() {
+    setEntries(await listDecks());
   }
 
   useEffect(() => {
-    refresh();
+    void refresh();
+    const onFocus = () => void refresh();
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
   const isEmpty = entries !== null && entries.length === 0;
@@ -75,8 +70,7 @@ export function DeckLibrary() {
                 key={entry.meta.id}
                 meta={entry.meta}
                 onDelete={() => {
-                  deleteDeck(entry.meta.id);
-                  refresh();
+                  void deleteDeck(entry.meta.id).then(refresh);
                 }}
                 onOpen={() => router.push(`/editor/${entry.meta.id}`)}
               />

@@ -3,33 +3,56 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { getAllImages, pruneImages } from "./imageStore";
+import { getAllImages } from "./imageStore";
 import { DEFAULT_RUN_STYLE, runsText } from "./richText";
 import { NEW_TEXT_DEFAULT, SEED_DECK_ID, useEditor } from "./store";
-import type { Deck, SlideElement, TextElement, TextRun } from "./types";
+import type { Deck, Slide, SlideElement, TextElement, TextRun } from "./types";
 
-// Multi-deck persistence layer ("deck library").
+// Client side of the deck persistence layer.
 //
-// Each deck is stored under its own localStorage key (`valon-deck-<id>`, text +
-// geometry only — image blobs stay in IndexedDB, keyed by element id and shared
-// across decks). A lightweight index (`valon-deck-index-v1`) lists the decks for
-// the home screen without parsing every deck. The editor loads ONE deck by id
-// (from the URL) and a global subscription saves whichever deck is open.
-
-const INDEX_KEY = "valon-deck-index-v1";
-const DECK_PREFIX = "valon-deck-";
-const LEGACY_KEY = "valon-slides-deck-v1"; // single-deck storage (pre-library)
-const MIGRATED_LEGACY_TITLE = "Violin Slide Deck 1";
+// Decks live SERVER-SIDE (data/decks/*.json, via /api/decks) so that external
+// agents — Claude Code building a weekly deployment review, a refine command
+// patching slide 3 — share one source of truth with the browser. This module is
+// the thin API client: the library lists through it, the editor loads through
+// it, a debounced subscription saves through it, and a small poll picks up
+// agent-side changes while the editor is open.
+//
+// (Decks used to live in localStorage + IndexedDB; a one-time migration below
+// pushes any legacy decks to the server so nothing is lost.)
 
 export type DeckMeta = {
   id: string;
   title: string;
   slideCount: number;
+  customer?: string;
+  themeId?: string;
   createdAt: number;
   updatedAt: number;
 };
 
-// ---- deck (de)serialization (moved from store.ts) -------------------------
+export type DeckEntry = { meta: DeckMeta; firstSlide: Slide | null };
+
+// ---- module sync state -------------------------------------------------------
+// Shared between the save subscription and the agent-sync poll so they never
+// fight: the poll only adopts server state when we have nothing waiting to save,
+// and our own saves never re-trigger (content-compare, timestamps excluded).
+
+let lastSavedJson = "";
+let lastServerUpdatedAt = 0;
+let saveTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Deck content identity, ignoring server-stamped timestamps.
+function serializeDeck(deck: Deck): string {
+  const { createdAt: _c, updatedAt: _u, ...content } = deck;
+  return JSON.stringify(content);
+}
+
+function adoptServerDeck(deck: Deck): void {
+  lastSavedJson = serializeDeck(deck);
+  lastServerUpdatedAt = deck.updatedAt ?? 0;
+}
+
+// ---- deck (de)serialization (legacy normalization) ----------------------------
 
 // Legacy text boxes (pre-rich-text decks) stored a single `text` string plus
 // element-level fontSize/color/bold. Convert any of those to a single run.
@@ -103,238 +126,144 @@ export function sanitizeDeck(deck: Deck): Deck {
   };
 }
 
-function eachElement(deck: Deck, fn: (el: SlideElement) => SlideElement): Deck {
-  return {
-    ...deck,
-    slides: deck.slides.map((slide) => ({
-      ...slide,
-      elements: slide.elements.map(fn)
-    }))
-  };
-}
+// ---- legacy migration (localStorage/IndexedDB -> server) ----------------------
 
-// Image blobs live in IndexedDB, not localStorage — strip before saving.
-function stripImageData(deck: Deck): Deck {
-  return eachElement(deck, (el) =>
-    el.type === "image" ? { ...el, src: undefined } : el
-  );
-}
+const LEGACY_INDEX_KEY = "valon-deck-index-v1";
+const LEGACY_DECK_PREFIX = "valon-deck-";
+const MIGRATED_KEY = "valon-decks-migrated-v1";
 
-// Re-attach image blobs (from IndexedDB) on load; normalize status so nothing is
-// stuck "generating" and missing blobs fall back to empty.
-function mergeImageData(deck: Deck, images: Record<string, string>): Deck {
-  return eachElement(deck, (el) =>
-    el.type === "image"
-      ? images[el.id]
-        ? { ...el, src: images[el.id], status: "done" }
-        : { ...el, src: undefined, status: "idle" }
-      : el
-  );
-}
-
-function elementIds(deck: Deck): string[] {
-  return deck.slides.flatMap((slide) => slide.elements.map((el) => el.id));
-}
-
-// ---- index ----------------------------------------------------------------
-
-function readIndex(): DeckMeta[] {
-  if (typeof window === "undefined") {
-    return [];
-  }
-  try {
-    const raw = window.localStorage.getItem(INDEX_KEY);
-    const parsed = raw ? (JSON.parse(raw) as DeckMeta[]) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeIndex(metas: DeckMeta[]): void {
-  try {
-    window.localStorage.setItem(INDEX_KEY, JSON.stringify(metas));
-  } catch {
-    // Best-effort; ignore quota/availability errors.
-  }
-}
-
-function writeDeckContent(deck: Deck): void {
-  try {
-    window.localStorage.setItem(
-      DECK_PREFIX + deck.id,
-      JSON.stringify(stripImageData(deck))
-    );
-  } catch {
-    // Best-effort.
-  }
-}
-
-// ---- legacy migration ------------------------------------------------------
-
-// On first run of the library, fold the old single saved deck into the library
-// as "Violin Slide Deck 1". Writing the index (even empty) marks migration done.
-function migrateLegacyIfNeeded(): void {
+async function migrateLegacyIfNeeded(): Promise<void> {
   if (typeof window === "undefined") {
     return;
   }
-  if (window.localStorage.getItem(INDEX_KEY) !== null) {
-    return; // already migrated
-  }
   try {
-    const raw = window.localStorage.getItem(LEGACY_KEY);
-    if (raw) {
-      const deck = sanitizeDeck(JSON.parse(raw) as Deck);
-      if (deck?.slides?.length) {
-        const id = crypto.randomUUID();
-        const migrated: Deck = {
-          ...deck,
-          id,
-          title: MIGRATED_LEGACY_TITLE,
-          selectedSlideId: deck.slides[0].id
-        };
-        writeDeckContent(migrated);
-        const now = Date.now();
-        writeIndex([
-          {
-            id,
-            title: MIGRATED_LEGACY_TITLE,
-            slideCount: migrated.slides.length,
-            createdAt: now,
-            updatedAt: now
-          }
-        ]);
-        return;
+    if (window.localStorage.getItem(MIGRATED_KEY)) {
+      return;
+    }
+    const raw = window.localStorage.getItem(LEGACY_INDEX_KEY);
+    const metas = raw ? (JSON.parse(raw) as { id: string }[]) : [];
+    if (Array.isArray(metas) && metas.length > 0) {
+      const images = await getAllImages().catch(() => ({}) as Record<string, string>);
+      for (const meta of metas) {
+        const deckRaw = window.localStorage.getItem(LEGACY_DECK_PREFIX + meta.id);
+        if (!deckRaw) {
+          continue;
+        }
+        const deck = sanitizeDeck(JSON.parse(deckRaw) as Deck);
+        // Re-attach image blobs (the legacy store stripped them to localStorage).
+        deck.slides = deck.slides.map((slide) => ({
+          ...slide,
+          elements: slide.elements.map((el) =>
+            el.type === "image" && images[el.id]
+              ? { ...el, src: images[el.id], status: "done" as const }
+              : el
+          )
+        }));
+        await fetch("/api/decks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deck })
+        });
       }
     }
+    window.localStorage.setItem(MIGRATED_KEY, "1");
   } catch {
-    // fall through to empty index
+    // Best-effort: a failed migration must never block the library.
   }
-  writeIndex([]);
 }
 
 // ---- public API ------------------------------------------------------------
 
-/** Decks for the home library, newest first. */
-export function listDecks(): DeckMeta[] {
-  migrateLegacyIfNeeded();
-  return readIndex().slice().sort((a, b) => b.createdAt - a.createdAt);
+/** Decks for the home library (with first slides for thumbnails), newest first. */
+export async function listDecks(): Promise<DeckEntry[]> {
+  await migrateLegacyIfNeeded();
+  const response = await fetch("/api/decks?include=first", { cache: "no-store" });
+  if (!response.ok) {
+    return [];
+  }
+  const payload = (await response.json()) as {
+    decks: (DeckMeta & { firstSlide: Slide | null })[];
+  };
+  return payload.decks.map(({ firstSlide, ...meta }) => ({
+    meta,
+    firstSlide: firstSlide ?? null
+  }));
 }
 
-/** Load a deck's content WITHOUT image blobs (synchronous — for thumbnails). */
-export function loadDeckRaw(id: string): Deck | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  try {
-    const raw = window.localStorage.getItem(DECK_PREFIX + id);
-    return raw ? sanitizeDeck(JSON.parse(raw) as Deck) : null;
-  } catch {
-    return null;
-  }
-}
-
-/** Load a deck with its images re-attached (for the editor). */
+/** Load a deck for the editor. */
 export async function loadDeck(id: string): Promise<Deck | null> {
-  const deck = loadDeckRaw(id);
-  if (!deck) {
-    return null;
-  }
   try {
-    const images = await getAllImages();
-    return mergeImageData(deck, images);
+    const response = await fetch(`/api/decks/${encodeURIComponent(id)}`, {
+      cache: "no-store"
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const payload = (await response.json()) as { deck: Deck };
+    return sanitizeDeck(payload.deck);
   } catch {
-    return deck;
+    return null;
   }
 }
 
-/** Write a deck's content + upsert its index entry. */
-export function saveDeck(deck: Deck): void {
-  if (typeof window === "undefined" || deck.id === SEED_DECK_ID) {
-    return;
+/** Write a deck to the server. Returns the stamped deck (or null on failure). */
+export async function saveDeck(deck: Deck): Promise<Deck | null> {
+  if (deck.id === SEED_DECK_ID) {
+    return null;
   }
-  writeDeckContent(deck);
-  const index = readIndex();
-  const now = Date.now();
-  const existing = index.find((meta) => meta.id === deck.id);
-  if (existing) {
-    existing.title = deck.title;
-    existing.slideCount = deck.slides.length;
-    existing.updatedAt = now;
-  } else {
-    index.push({
-      id: deck.id,
-      title: deck.title,
-      slideCount: deck.slides.length,
-      createdAt: now,
-      updatedAt: now
+  try {
+    const response = await fetch(`/api/decks/${encodeURIComponent(deck.id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deck })
     });
+    if (!response.ok) {
+      return null;
+    }
+    const payload = (await response.json()) as { deck: Deck };
+    return payload.deck;
+  } catch {
+    return null;
   }
-  writeIndex(index);
 }
 
 /**
- * Register a deck in the index WITHOUT writing (skeleton) content — used when a
- * generated deck starts streaming so it lists immediately; the full content is
- * saved by the persistence subscription once every slide has filled in.
+ * Register a deck on the server as soon as generation starts (pending skeletons
+ * included), so it lists in the library immediately; the save subscription
+ * uploads the finished content once every slide has streamed in.
  */
-export function registerDeck(id: string, title: string, slideCount: number): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-  const index = readIndex();
-  if (index.some((meta) => meta.id === id)) {
-    return;
-  }
-  const now = Date.now();
-  index.push({ id, title, slideCount, createdAt: now, updatedAt: now });
-  writeIndex(index);
+export function registerDeck(deck: Deck): void {
+  void fetch("/api/decks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ deck })
+  });
 }
 
-export function renameDeck(id: string, title: string): void {
+export async function renameDeck(id: string, title: string): Promise<void> {
   const trimmed = title.trim() || "Untitled deck";
-  const deck = loadDeckRaw(id);
-  if (deck) {
-    writeDeckContent({ ...deck, title: trimmed });
-  }
-  const index = readIndex();
-  const meta = index.find((m) => m.id === id);
-  if (meta) {
-    meta.title = trimmed;
-    writeIndex(index);
-  }
+  await fetch(`/api/decks/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ops: [{ op: "setTitle", title: trimmed }] })
+  }).catch(() => {});
 }
 
-export function deleteDeck(id: string): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-  try {
-    window.localStorage.removeItem(DECK_PREFIX + id);
-  } catch {
-    // ignore
-  }
-  const index = readIndex().filter((meta) => meta.id !== id);
-  writeIndex(index);
-  // Drop images that no longer belong to any remaining deck.
-  const keep = new Set<string>();
-  for (const meta of index) {
-    const deck = loadDeckRaw(meta.id);
-    if (deck) {
-      for (const elementId of elementIds(deck)) {
-        keep.add(elementId);
-      }
-    }
-  }
-  void pruneImages(Array.from(keep));
+export async function deleteDeck(id: string): Promise<void> {
+  await fetch(`/api/decks/${encodeURIComponent(id)}`, { method: "DELETE" }).catch(
+    () => {}
+  );
 }
 
 // ---- hooks -----------------------------------------------------------------
 
+const SAVE_DEBOUNCE_MS = 400;
+
 /**
  * Global save subscription. Mount ONCE high in the tree (root layout) so it
  * survives `/` <-> `/editor` navigation — slides that finish streaming after the
- * user has navigated away still get saved. Saves whichever deck the store holds.
+ * user has navigated away still get saved. Debounced (writes go over HTTP now),
+ * and content-compared so adopting server state never echoes a save back.
  */
 export function usePersistDecks(): void {
   useEffect(() => {
@@ -350,7 +279,25 @@ export function usePersistDecks(): void {
       if (deck.slides.some((slide) => slide.pending)) {
         return;
       }
-      saveDeck(deck);
+      if (serializeDeck(deck) === lastSavedJson) {
+        return; // unchanged (or just adopted from the server)
+      }
+      if (saveTimer) {
+        clearTimeout(saveTimer);
+      }
+      saveTimer = setTimeout(async () => {
+        saveTimer = null;
+        const current = useEditor.getState().deck;
+        const json = serializeDeck(current);
+        if (json === lastSavedJson) {
+          return;
+        }
+        const saved = await saveDeck(current);
+        if (saved) {
+          lastSavedJson = json;
+          lastServerUpdatedAt = saved.updatedAt ?? 0;
+        }
+      }, SAVE_DEBOUNCE_MS);
     });
   }, []);
 }
@@ -383,6 +330,7 @@ export function useLoadDeck(deckId: string): boolean {
         router.replace("/"); // unknown deck — back to the library
         return;
       }
+      adoptServerDeck(deck);
       useEditor.getState().replaceDeck(deck);
       setReady(true);
     })();
@@ -392,4 +340,56 @@ export function useLoadDeck(deckId: string): boolean {
   }, [deckId, router]);
 
   return ready;
+}
+
+const SYNC_INTERVAL_MS = 3000;
+
+/**
+ * Live agent sync. While the editor is open, poll the server and adopt any deck
+ * version written by someone else — i.e. an agent running a refine op in the
+ * terminal shows up in the open editor within a few seconds. Never adopts while
+ * the user has unsaved local changes (a save is pending), is mid-text-edit, or a
+ * generation is streaming in.
+ */
+export function useDeckSync(deckId: string, ready: boolean): void {
+  useEffect(() => {
+    if (!ready) {
+      return;
+    }
+    const interval = setInterval(async () => {
+      if (document.hidden || saveTimer) {
+        return;
+      }
+      const state = useEditor.getState();
+      if (
+        state.deck.id !== deckId ||
+        state.editingId !== null ||
+        state.deck.slides.some((slide) => slide.pending)
+      ) {
+        return;
+      }
+      try {
+        const response = await fetch(`/api/decks/${encodeURIComponent(deckId)}`, {
+          cache: "no-store"
+        });
+        if (!response.ok) {
+          return;
+        }
+        const { deck } = (await response.json()) as { deck: Deck };
+        if ((deck.updatedAt ?? 0) <= lastServerUpdatedAt) {
+          return;
+        }
+        const json = serializeDeck(deck);
+        if (json === lastSavedJson) {
+          lastServerUpdatedAt = deck.updatedAt ?? 0; // our own save echoed back
+          return;
+        }
+        adoptServerDeck(deck);
+        useEditor.getState().replaceDeck(sanitizeDeck(deck));
+      } catch {
+        // Transient network error — try again next tick.
+      }
+    }, SYNC_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [deckId, ready]);
 }

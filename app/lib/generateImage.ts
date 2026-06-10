@@ -1,12 +1,12 @@
 "use client";
 
-import { putImage } from "./imageStore";
 import { useEditor } from "./store";
 
-// Generates an image for an image element via /api/generate, updates the element's
-// status/src in the store, and persists the blob to IndexedDB. Returns an error
-// message string on failure, or null on success. The generated image only ever
-// fills this one element — never the whole slide.
+// Generates an image for an image element via /api/generate and updates the
+// element's status/src in the store. Returns an error message string on failure,
+// or null on success. The generated image only ever fills this one element —
+// never the whole slide. Persistence is handled by the deck save subscription
+// (image data URLs are stored inline in the server-side deck JSON).
 export async function generateImage(
   id: string,
   prompt: string
@@ -36,9 +36,6 @@ export async function generateImage(
     }
 
     updateImage(id, { src: payload.imageData, status: "done" });
-    // Large base64 blobs live in IndexedDB, keyed by element id — never in
-    // localStorage (see usePersistDeck).
-    await putImage(id, payload.imageData);
     return null;
   } catch (error) {
     updateImage(id, { status: "error" });
