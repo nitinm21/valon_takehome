@@ -1,0 +1,153 @@
+# Cascade Federal Credit Union — tenant configuration
+# Environment: staging
+# Last modified: 2026-05-13 by sam.reeves@valon.com
+# Cutover scheduled: 2026-07-08
+
+tenant:
+  id: cascade-fcu
+  display_name: Cascade Federal Credit Union
+  short_code: CFCU
+  environment: staging
+  region: us-west-2
+  go_live_date: 2026-07-08
+
+boarding:
+  phase: ingest-validation  # ingest-validation | parallel-run | cutover | post-cutover
+  source_servicer: black-knight-msp
+  cutover_window:
+    start: 2026-07-08T00:00:00-07:00
+    end: 2026-07-08T06:00:00-07:00
+  test_runs:
+    cadence: weekly
+    next_run: 2026-05-22T22:00:00-07:00
+  loan_tape:
+    expected_record_count: 31247
+    schema_version: cfcu-v3
+    reject_threshold_pct: 0.5  # warn if rejects > 0.5%
+
+escrow:
+  # NOTE — borrower expectation per Cascade is monthly statements;
+  # current value reflects the platform default and needs to change
+  # before cutover. Surfaced in the 2026-05-19 sync.
+  analysis_cadence: annual           # annual | semiannual | quarterly | monthly
+  cushion_months: 2                  # RESPA max
+  forced_placement: enabled
+  forced_placement_provider: assurant
+  shortage_threshold_dollars: 50
+  surplus_refund_threshold_dollars: 50
+  preview_pdf_in_member_portal: true
+
+payments:
+  ach:
+    provider: aci-speedpay
+    nsf_retry_policy:
+      max_attempts: 2
+      cooldown_days: 3
+    timeout_seconds: 600           # see 2026-05-17 ERROR in integration_log
+    backup_connection_enabled: true
+  partial_payments:
+    handling: suspense_account
+    auto_apply_threshold_pct: 95   # apply if >= 95% of scheduled payment
+  autopay:
+    enabled: true
+    default_draft_day: due_date    # due_date | first | fifteenth | custom
+    advance_notice_days: 10
+  late_fee:
+    grace_period_days: 15
+    fee_calculation: greater_of_pct_or_flat
+    pct: 5.0
+    flat_dollars: 25.00
+
+integrations:
+  mers:
+    sync_interval_hours: 24
+    file_format: mers-iqs-v6
+    next_sync: 2026-05-20T02:00:00-07:00
+    sftp_endpoint: mers-prod.cascadefcu.example
+  encompass:
+    enabled: false                 # closed-loan ingestion only; not used at Cascade
+  credit_bureaus:
+    metro2_reporting:
+      enabled: true
+      cadence: monthly
+      reporters: [experian, equifax, transunion, innovis]
+      cutoff_day_of_month: 28
+  irs:
+    form_1098_enabled: true
+    annual_run_window: 2026-12-15T00:00:00-08:00
+  tax_service:
+    provider: corelogic
+    delinquency_check_cadence: monthly
+  flood_zone:
+    provider: corelogic
+    determination_cache_days: 1095
+
+notifications:
+  borrower_statements:
+    cadence: monthly               # aligns with Cascade member expectations
+    delivery: paper_and_eStatement
+    template_set: cfcu-cobrand-v1
+  delinquency_notices:
+    early_warning_day: 5           # days past due
+    breach_letter_day: 30
+    template_set: cfcu-cobrand-v1
+  opt_out:
+    sms_default: enabled
+    email_default: enabled
+    physical_mail_default: required_by_regulation
+
+feature_flags:
+  member_portal_v2:
+    enabled: true
+    rollout_pct: 100
+    notes: launched 2025 across CFCU footprint
+  ai_payment_assistant:
+    enabled: false
+    notes: pending Maya Chen sign-off, see 2026-05-12 sync
+  loss_mitigation_self_serve:
+    enabled: false
+    rollout_pct: 0
+    notes: targeting Q4 2026
+  escrow_analysis_preview_pdf:
+    enabled: true
+    rollout_pct: 100
+  bilingual_statements_es:
+    enabled: true
+    locales: [en-US, es-US]
+  one_time_payment_no_login:
+    enabled: false
+    notes: compliance review pending
+  text_to_pay:
+    enabled: false
+    notes: requires NACHA WEB authorization update (see customer_brief risk 3)
+  document_vault:
+    enabled: true
+    rollout_pct: 100
+  loan_modification_workflow:
+    enabled: false
+  paperless_default_for_new_loans:
+    enabled: true
+
+sla:
+  payment_processing_ack_seconds: 60
+  payment_processing_settle_business_days: 2
+  escrow_disbursement_cutoff_days: 5
+  escrow_disbursement_skip_fridays: true     # CFCU-specific quirk, see runbook
+  member_inquiry_response_business_days: 1
+  metro2_reporting_lag_business_days: 2
+
+compliance:
+  respa_disclosure_set: 2024-rev-3
+  reg_z_billing_window_enabled: true
+  service_member_civil_relief_check: enabled
+  hud_outreach_required_post_45_dpd: true
+  state_specific_overlays:
+    - WA  # Washington Foreclosure Fairness Act
+    - OR  # Oregon SB-628
+    - ID
+
+data_retention:
+  loan_records_years: 7
+  audio_call_recordings_days: 1095   # 3 years, per CFCU policy
+  document_vault_years: 10
+  metro2_history_years: 7

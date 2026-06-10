@@ -1,0 +1,166 @@
+# Fidelity Credit Union — tenant configuration
+# Environment: staging
+# Last modified: 2026-05-20 by jamie.cole@valon.com
+# Cutover scheduled: 2026-06-22
+
+tenant:
+  id: fidelity-cu
+  display_name: Fidelity Credit Union
+  short_code: FCU
+  environment: staging
+  region: us-east-1
+  go_live_date: 2026-06-22
+
+boarding:
+  phase: ingest-validation  # ingest-validation | parallel-run | cutover | post-cutover
+  source_servicer: fiserv-loanserv
+  cutover_window:
+    start: 2026-06-22T00:00:00-04:00
+    end: 2026-06-22T06:00:00-04:00
+  test_runs:
+    cadence: biweekly
+    next_run: 2026-05-27T18:00:00-04:00     # reingest after property_type patch v2.1.4
+  loan_tape:
+    expected_record_count: 14512
+    schema_version: fidelity-v2
+    reject_threshold_pct: 0.5
+  property_type_mapping:
+    SFR: SFR
+    MAN: MAN
+    CON: CON
+    PUD: PUD
+    MFR: MAN                # Fidelity-specific; added in v2.1.4 (queued 2026-05-27)
+
+escrow:
+  analysis_cadence: monthly          # confirmed in 2026-05-05 kickoff
+  cushion_months: 2                  # RESPA max
+  forced_placement: enabled
+  forced_placement_provider: assurant
+  shortage_threshold_dollars: 50
+  surplus_refund_threshold_dollars: 50
+  preview_pdf_in_member_portal: true
+
+payments:
+  ach:
+    provider: aci-speedpay
+    nsf_retry_policy:
+      max_attempts: 2
+      cooldown_days: 3
+    timeout_seconds: 600
+    backup_connection_enabled: true
+  partial_payments:
+    handling: suspense_account
+    auto_apply_threshold_pct: 95
+  autopay:
+    enabled: true
+    default_draft_day: due_date
+    advance_notice_days: 10
+  late_fee:
+    grace_period_days: 15
+    fee_calculation: greater_of_pct_or_flat
+    pct: 5.0
+    flat_dollars: 20.00
+
+integrations:
+  mers:
+    sync_interval_hours: 24
+    file_format: mers-iqs-v6
+    next_sync: 2026-05-22T02:00:00-04:00
+    sftp_endpoint: mers-prod.fidelitycu.example
+  encompass:
+    enabled: false
+  credit_bureaus:
+    metro2_reporting:
+      enabled: true
+      cadence: monthly
+      reporters: [experian, equifax, transunion]
+      cutoff_day_of_month: 28
+  irs:
+    form_1098_enabled: true
+    annual_run_window: 2026-12-15T00:00:00-05:00
+  tax_service:
+    provider: corelogic
+    delinquency_check_cadence: monthly
+  flood_zone:
+    provider: corelogic
+    determination_cache_days: 1095
+
+notifications:
+  borrower_statements:
+    cadence: monthly
+    delivery: paper_and_eStatement
+    template_set: fidelity-cobrand-v1
+    contact_phone: "1-800-555-0142"          # Fidelity member services (not Valon)
+    contact_phone_owner: fidelity
+  delinquency_notices:
+    early_warning_day: 5
+    breach_letter_day: 30
+    template_set: fidelity-cobrand-v1
+  transfer_notice:
+    # 15-day borrower transfer notice — phone number ownership is OPEN as of 2026-05-21
+    # Diane has asked for Fidelity's number for first 90 days; pending Valon legal RESPA review.
+    contact_phone: "1-800-555-VALON"         # currently Valon — to be reviewed
+    contact_phone_owner: valon
+    review_status: pending_legal
+  opt_out:
+    sms_default: enabled
+    email_default: enabled
+    physical_mail_default: required_by_regulation
+
+feature_flags:
+  member_portal_v2:
+    enabled: true
+    rollout_pct: 100
+  ai_payment_assistant:
+    enabled: false
+    notes: defer to Q3 2026 per Diane
+  loss_mitigation_self_serve:
+    enabled: false
+    rollout_pct: 0
+  escrow_analysis_preview_pdf:
+    enabled: true
+    rollout_pct: 100
+  bilingual_statements_es:
+    enabled: true
+    locales: [en-US, es-US]
+  one_time_payment_no_login:
+    enabled: true                  # Fidelity-side ask, enabled at kickoff
+    rollout_pct: 100
+  text_to_pay:
+    enabled: true                  # Fidelity's WEB authorization language covers SMS debits
+    rollout_pct: 100
+  document_vault:
+    enabled: true
+    rollout_pct: 100
+
+sla:
+  payment_processing_ack_seconds: 60
+  payment_processing_settle_business_days: 2
+  escrow_disbursement_cutoff_days: 5
+  member_inquiry_response_business_days: 1
+  metro2_reporting_lag_business_days: 2
+
+compliance:
+  respa_disclosure_set: 2024-rev-3
+  reg_z_billing_window_enabled: true
+  service_member_civil_relief_check: enabled
+  hud_outreach_required_post_45_dpd: true
+  state_specific_overlays:
+    - NC
+    - SC
+    - GA
+
+branding:
+  # Refreshed September 2025 — bear-paw mark + navy/gold palette.
+  # Asset pack: s3://valon-cobrand-assets/fidelity-cu/2025-09/
+  primary_color: "#0B2545"          # navy
+  accent_color: "#E5B33A"           # gold
+  logo_asset_id: fidelity-bearpaw-2025-09
+  footer_required_line: "Serviced by Valon"
+  footer_required_line_pt: 7
+
+data_retention:
+  loan_records_years: 7
+  audio_call_recordings_days: 365
+  document_vault_years: 10
+  metro2_history_years: 7

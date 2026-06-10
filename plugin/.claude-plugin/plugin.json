@@ -1,0 +1,10 @@
+{
+  "name": "valon-slides",
+  "description": "Build and refine weekly client deployment-review decks from customer artifacts, straight from Claude Code.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Nitin Murali",
+    "url": "https://github.com/nitinm21"
+  },
+  "license": "MIT"
+}

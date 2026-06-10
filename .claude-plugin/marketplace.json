@@ -1,0 +1,17 @@
+{
+  "name": "valon-slides",
+  "owner": {
+    "name": "Nitin Murali",
+    "url": "https://github.com/nitinm21"
+  },
+  "metadata": {
+    "description": "Agent-driven slide decks for Valon deployment strategists: a weekly, citation-grounded client deployment review built from customer artifacts, reviewed in a live editor."
+  },
+  "plugins": [
+    {
+      "name": "valon-slides",
+      "source": "./plugin",
+      "description": "Build and refine weekly client deployment-review decks from customer artifacts, straight from Claude Code."
+    }
+  ]
+}

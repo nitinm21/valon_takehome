@@ -1,6 +1,17 @@
 # Valon Takehome 
 
-An AI-native slide editor. 
+An AI-native slide editor — built to be driven by **AI agents**, not just clicks.
+
+The headline workflow: a Valon deployment strategist runs `/weekly-deck cascade-fcu`
+in Claude Code, and the agent mines that customer's deployment artifacts
+(`samples/customers/`), authors a citation-grounded weekly client review —
+KPI cards, real charts, milestone tables — and the deck appears in the library
+ready to present. Feedback like *"refine slide 3: lead with the escrow milestone"*
+patches the deck through the API and shows up live in the open editor.
+
+- **Agent API & deck schema:** see [`AGENTS.md`](AGENTS.md)
+- **Claude Code plugin** (`/weekly-deck`, `/deck-status`): see [`plugin/`](plugin/)
+- **Sample customer bundles** (the grounding data): [`samples/customers/`](samples/customers/)
 
 ---
 
@@ -75,18 +86,39 @@ exposed to the browser.
   set in `.env.local` and that you restarted `npm run dev` after editing it.
 - **Port 3000 is in use:** Run on another port with `npm run dev -- -p 3001`.
 - **Stale build errors:** Delete the `.next` folder and run `npm run dev` again.
-- **Decks disappeared:** Deck state is stored in your browser's local storage,
-  so it's per-browser and cleared when you clear site data. There is no database.
+- **Where are decks stored?** Server-side, as JSON files in `data/decks/`
+  (git-ignored). That's what lets agents and the browser share one source of
+  truth. Decks from older versions of the app (browser localStorage) migrate to
+  the server automatically the first time the library loads.
 
 ---
 
 ## How it works
 
-- **Deck library** (`/`) — browse, open, or create decks.
+- **Deck library** (`/`) — browse, open, or create decks (agent-created decks
+  appear here too).
 - **Create flow** (`/create`) — describe or paste content → review an editable
-  outline → stream a full deck into the editor.
+  outline → pick a theme → stream a full deck into the editor.
 - **Editor** (`/editor/[deckId]`) — a slide canvas with text, shapes, images,
-  themes, AI image generation, AI whole-slide generation, and per-slide AI edits.
+  data-viz (KPI cards, charts, tables), themes, AI image generation, AI
+  whole-slide generation, and per-slide AI edits. The editor live-syncs deck
+  changes made through the API, and a **Sources** panel shows which customer
+  artifacts back each agent-authored slide.
+- **Deck API** (`/api/decks`) — agents create decks semantically (template +
+  content slots; the server owns layout) and refine them with transactional
+  patch ops. Full reference in [`AGENTS.md`](AGENTS.md).
 - **Export** — download the current deck as a `.pptx` file.
+
+### Using it from Claude Code
+
+From this repo (with `npm run dev` running), install the plugin and run:
+
+```
+/weekly-deck cascade-fcu
+```
+
+The agent reads the customer bundle, finds last week's deck for continuity,
+authors this week's review with per-slide citations, and replies with the
+editor link. Then iterate conversationally: `refine slide 3: ...`.
 
 

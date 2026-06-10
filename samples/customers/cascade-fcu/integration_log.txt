@@ -1,0 +1,123 @@
+2026-04-28 02:00:01 INFO  [mers] Nightly sync started
+2026-04-28 02:11:48 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-04-28 06:00:02 INFO  [health] All subsystems nominal
+2026-04-28 22:00:01 INFO  [ach] Nightly batch started: 4102 scheduled debits
+2026-04-28 22:43:19 INFO  [ach] Batch completed: 4098 settled, 4 NSF
+2026-04-29 02:00:01 INFO  [mers] Nightly sync started
+2026-04-29 02:12:04 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-04-29 22:00:01 INFO  [ach] Nightly batch started: 4187 scheduled debits
+2026-04-29 22:39:51 INFO  [ach] Batch completed: 4181 settled, 6 NSF
+2026-04-30 02:00:01 INFO  [mers] Nightly sync started
+2026-04-30 02:11:33 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-04-30 22:00:01 INFO  [ach] Nightly batch started: 4214 scheduled debits
+2026-04-30 22:41:08 INFO  [ach] Batch completed: 4209 settled, 5 NSF
+2026-05-01 02:00:01 INFO  [mers] Nightly sync started
+2026-05-01 02:11:52 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-01 18:00:01 INFO  [boarding] Starting scheduled test ingest run 2
+2026-05-01 18:00:14 INFO  [boarding] Downloading loan_tape_v2.csv from cascade-prod-sftp
+2026-05-01 18:01:48 INFO  [boarding] Validating loan_tape_v2.csv: 31224 rows
+2026-05-01 18:13:42 INFO  [boarding] Ingested loan_tape_v2.csv: 31201 records, 23 rejected (see rejects-2026-05-01.csv)
+2026-05-01 18:13:42 INFO  [boarding] Reject breakdown: 14 escrow_date_format, 9 missing_investor_loan_id
+2026-05-01 22:00:01 INFO  [ach] Nightly batch started: 4093 scheduled debits
+2026-05-01 22:38:09 INFO  [ach] Batch completed: 4089 settled, 4 NSF
+2026-05-02 02:00:01 INFO  [mers] Nightly sync started
+2026-05-02 02:12:21 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-02 22:00:01 INFO  [ach] Nightly batch started: 218 scheduled debits
+2026-05-02 22:04:32 INFO  [ach] Batch completed: 218 settled, 0 NSF
+2026-05-03 02:00:01 INFO  [mers] Nightly sync started
+2026-05-03 02:11:09 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-04 02:00:01 INFO  [mers] Nightly sync started
+2026-05-04 02:11:48 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-04 12:18:33 INFO  [escrow] Monthly tax escrow disbursement run: 2841 disbursements, $4.21M total
+2026-05-04 22:00:01 INFO  [ach] Nightly batch started: 4156 scheduled debits
+2026-05-04 22:40:18 INFO  [ach] Batch completed: 4150 settled, 6 NSF
+2026-05-05 02:00:01 INFO  [mers] Nightly sync started
+2026-05-05 02:11:38 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-05 09:14:02 INFO  [mers] Confirmation file received from MERS for 2026-05-04 update batch
+2026-05-05 22:00:01 INFO  [ach] Nightly batch started: 4188 scheduled debits
+2026-05-05 22:41:55 INFO  [ach] Batch completed: 4184 settled, 4 NSF
+2026-05-06 02:00:01 INFO  [mers] Nightly sync started
+2026-05-06 02:12:17 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-06 14:33:01 WARN  [escrow] Disbursement for loan_id=8849002 deferred: Friday-skip rule honored (next attempt 2026-05-11)
+2026-05-06 22:00:01 INFO  [ach] Nightly batch started: 4205 scheduled debits
+2026-05-06 22:42:38 INFO  [ach] Batch completed: 4200 settled, 5 NSF
+2026-05-07 02:00:01 INFO  [mers] Nightly sync started
+2026-05-07 02:11:24 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-07 22:00:01 INFO  [ach] Nightly batch started: 4173 scheduled debits
+2026-05-07 22:40:11 INFO  [ach] Batch completed: 4170 settled, 3 NSF
+2026-05-08 02:00:01 INFO  [mers] Nightly sync started
+2026-05-08 02:11:48 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-08 11:02:13 INFO  [audit] cfcu-audit-mirror sample export delivered (sam.reeves@valon.com → cascadefcu.compliance@cascadefcu.example)
+2026-05-08 22:00:01 INFO  [ach] Nightly batch started: 4131 scheduled debits
+2026-05-08 22:39:42 INFO  [ach] Batch completed: 4127 settled, 4 NSF
+2026-05-09 02:00:01 INFO  [mers] Nightly sync started
+2026-05-09 02:11:57 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-10 02:00:01 INFO  [mers] Nightly sync started
+2026-05-10 02:12:08 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-11 02:00:01 INFO  [mers] Nightly sync started
+2026-05-11 02:11:42 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-11 09:00:14 INFO  [support] Stakeholder OOO notice registered: priya.subramanian@cascadefcu.example until 2026-05-22 (backup: derek.olusola@cascadefcu.example)
+2026-05-11 14:33:18 INFO  [escrow] Deferred 2026-05-06 disbursement for loan_id=8849002 settled, $3,142.18
+2026-05-11 22:00:01 INFO  [ach] Nightly batch started: 4144 scheduled debits
+2026-05-11 22:39:58 INFO  [ach] Batch completed: 4139 settled, 5 NSF
+2026-05-12 02:00:01 INFO  [mers] Nightly sync started
+2026-05-12 02:11:51 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-12 22:00:01 INFO  [ach] Nightly batch started: 4198 scheduled debits
+2026-05-12 22:41:33 INFO  [ach] Batch completed: 4193 settled, 5 NSF
+2026-05-13 02:00:01 INFO  [mers] Nightly sync started
+2026-05-13 02:11:43 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-13 16:42:17 INFO  [config] Tenant config updated by sam.reeves@valon.com (5 fields changed)
+2026-05-13 22:00:01 INFO  [ach] Nightly batch started: 4179 scheduled debits
+2026-05-13 22:40:48 INFO  [ach] Batch completed: 4174 settled, 5 NSF
+2026-05-14 02:00:01 INFO  [mers] Nightly sync started
+2026-05-14 02:11:29 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-14 22:00:01 INFO  [ach] Nightly batch started: 4221 scheduled debits
+2026-05-14 22:42:14 INFO  [ach] Batch completed: 4217 settled, 4 NSF
+2026-05-15 02:00:01 INFO  [mers] Nightly sync started
+2026-05-15 02:11:48 INFO  [mers] Sync completed: 31201 loans confirmed, 0 mismatches
+2026-05-15 22:00:01 INFO  [boarding] Starting scheduled test ingest run 3
+2026-05-15 22:00:14 INFO  [boarding] Downloading loan_tape_v3.csv from cascade-prod-sftp
+2026-05-15 22:01:32 INFO  [boarding] Validating loan_tape_v3.csv: 31247 rows
+2026-05-15 22:14:18 INFO  [boarding] Ingested loan_tape_v3.csv: 31247 records, 12 rejected (see rejects-2026-05-15.csv)
+2026-05-15 22:14:18 WARN  [boarding] Rejected loan_id=8847291: missing investor_loan_id field
+2026-05-15 22:14:18 WARN  [boarding] Rejected loan_id=8847294: missing investor_loan_id field
+2026-05-15 22:14:18 WARN  [boarding] Rejected loan_id=8848112: missing investor_loan_id field
+2026-05-15 22:14:18 WARN  [boarding] Rejected loan_id=8851004: missing investor_loan_id field
+2026-05-15 22:14:19 WARN  [boarding] Rejected loan_id=8849774: escrow_analysis_date "06/24" — year inference failed (day-of-month 24 ambiguous)
+2026-05-15 22:14:19 WARN  [boarding] Rejected loan_id=8850221: escrow_analysis_date "11/24" — year inference failed
+2026-05-15 22:14:19 WARN  [boarding] Rejected loan_id=8850339: escrow_analysis_date "11/24" — year inference failed
+2026-05-15 22:14:19 WARN  [boarding] Rejected loan_id=8850412: escrow_analysis_date "11/24" — year inference failed
+2026-05-15 22:14:19 WARN  [boarding] Rejected loan_id=8850587: escrow_analysis_date "12/24" — year inference failed
+2026-05-15 22:14:19 WARN  [boarding] Rejected loan_id=8850612: escrow_analysis_date "12/24" — year inference failed
+2026-05-15 22:14:19 WARN  [boarding] Rejected loan_id=8850733: escrow_analysis_date "12/24" — year inference failed
+2026-05-15 22:14:19 WARN  [boarding] Rejected loan_id=8851009: escrow_analysis_date "12/24" — year inference failed
+2026-05-15 22:14:19 INFO  [boarding] Reject breakdown: 4 missing_investor_loan_id, 8 escrow_date_format
+2026-05-15 22:14:20 INFO  [boarding] Comparison vs. v2: +46 net new records, -23 reject rate improvement
+2026-05-16 02:00:01 INFO  [mers] Nightly sync started
+2026-05-16 02:14:33 INFO  [mers] Sync completed: 31235 loans confirmed, 0 mismatches
+2026-05-16 09:18:42 INFO  [boarding] Ingest summary emailed to deployment team (sam.reeves@valon.com)
+2026-05-16 22:00:01 INFO  [ach] Nightly batch started: 4188 scheduled debits
+2026-05-16 22:41:07 INFO  [ach] Batch completed: 4184 settled, 4 NSF
+2026-05-17 02:00:01 INFO  [mers] Nightly sync started
+2026-05-17 02:11:54 INFO  [mers] Sync completed: 31235 loans confirmed, 0 mismatches
+2026-05-17 22:00:01 INFO  [ach] Nightly batch started: 4218 scheduled debits
+2026-05-17 22:00:14 INFO  [ach] Connection established to aci-speedpay (primary)
+2026-05-17 22:08:42 INFO  [ach] Batch progress: 1893/4218 processed
+2026-05-17 22:14:18 INFO  [ach] Batch progress: 2447/4218 processed
+2026-05-17 22:24:33 ERROR [ach] Provider response timeout after 600s; 47 payments queued for retry
+2026-05-17 22:24:34 INFO  [ach] Failover: switching to backup connection
+2026-05-17 22:25:01 INFO  [ach] Backup connection established
+2026-05-17 22:25:14 INFO  [ach] Resuming batch from offset 2447
+2026-05-17 23:08:42 INFO  [ach] Batch completed: 4171 settled, 47 deferred to 2026-05-18 retry queue
+2026-05-17 23:08:43 INFO  [ach] Incident ticket created: INC-2026-0517-001 (auto-paged: payments-eng-oncall)
+2026-05-18 02:00:01 INFO  [mers] Nightly sync started
+2026-05-18 02:11:48 INFO  [mers] Sync completed: 31235 loans confirmed, 0 mismatches
+2026-05-18 06:00:02 INFO  [health] All subsystems nominal
+2026-05-18 09:14:33 INFO  [ach] Retry batch started for 47 deferred payments from 2026-05-17
+2026-05-18 09:17:08 INFO  [ach] Retry batch completed: 47 settled, 0 NSF
+2026-05-18 11:02:14 INFO  [support] Ticket count uptick observed: 11 opened today (baseline 3-5); 8 related to "missing payment" inquiries from CFCU pilot members
+2026-05-18 22:00:01 INFO  [ach] Nightly batch started: 4096 scheduled debits
+2026-05-18 22:38:18 INFO  [ach] Batch completed: 4092 settled, 4 NSF
+2026-05-19 02:00:01 INFO  [mers] Nightly sync started
+2026-05-19 02:11:51 INFO  [mers] Sync completed: 31235 loans confirmed, 0 mismatches
+2026-05-19 06:00:02 INFO  [health] All subsystems nominal

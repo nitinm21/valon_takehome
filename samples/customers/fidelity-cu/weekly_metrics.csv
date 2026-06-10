@@ -1,0 +1,6 @@
+week_ending,deployment_week,weekly_active_members,support_tickets_opened,support_tickets_resolved,p95_response_time_ms,ach_success_rate_pct,boarding_rejects,training_sessions_completed_cum,member_nps,notes
+2026-05-10,2,412,9,8,278,99.90,28,0,,Ingest run 1 (May 8): 28 rejects (Fiserv LoanServ export field mapping)
+2026-05-17,3,448,11,12,284,99.93,,0,,Document indexing backlog identified: ~2400 trailing docs from LoanServ export
+2026-05-24,4,471,10,9,289,99.94,9,1,,Loan tape v2 ingested May 19; ingest run 2 (May 21): 9 rejects; doc backlog 1750 remaining
+2026-05-31,5,503,8,9,276,99.95,2,1,,Ingest run 3 (May 28): 2 rejects; parallel run started Jun 1; doc backlog 1100 remaining
+2026-06-07,6,542,7,8,269,99.96,0,2,,Ingest run 4 (Jun 4): 0 rejects; parallel-run payment variance 0.4% -> 0.1% over the week; doc backlog 600 remaining

@@ -1,0 +1,85 @@
+2026-05-04 02:00:01 INFO  [mers] Nightly sync started
+2026-05-04 02:04:11 INFO  [mers] Sync completed: 14503 loans confirmed, 0 mismatches
+2026-05-04 06:00:02 INFO  [health] All subsystems nominal
+2026-05-04 22:00:01 INFO  [ach] Nightly batch started: 1842 scheduled debits
+2026-05-04 22:21:18 INFO  [ach] Batch completed: 1839 settled, 3 NSF
+2026-05-05 02:00:01 INFO  [mers] Nightly sync started
+2026-05-05 02:03:48 INFO  [mers] Sync completed: 14503 loans confirmed, 0 mismatches
+2026-05-05 18:00:01 INFO  [boarding] Starting scheduled test ingest run 1
+2026-05-05 18:00:14 INFO  [boarding] Downloading loan_tape_v1.csv from fidelity-prod-sftp
+2026-05-05 18:01:22 INFO  [boarding] Validating loan_tape_v1.csv: 14491 rows
+2026-05-05 18:08:47 INFO  [boarding] Ingested loan_tape_v1.csv: 14472 records, 19 rejected (see rejects-2026-05-05.csv)
+2026-05-05 18:08:47 INFO  [boarding] Reject breakdown: 11 unknown_property_type, 5 escrow_date_format, 3 missing_co_borrower_ssn
+2026-05-05 22:00:01 INFO  [ach] Nightly batch started: 1851 scheduled debits
+2026-05-05 22:20:58 INFO  [ach] Batch completed: 1847 settled, 4 NSF
+2026-05-06 02:00:01 INFO  [mers] Nightly sync started
+2026-05-06 02:04:02 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-06 22:00:01 INFO  [ach] Nightly batch started: 1834 scheduled debits
+2026-05-06 22:21:32 INFO  [ach] Batch completed: 1830 settled, 4 NSF
+2026-05-07 02:00:01 INFO  [mers] Nightly sync started
+2026-05-07 02:03:54 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-07 22:00:01 INFO  [ach] Nightly batch started: 1827 scheduled debits
+2026-05-07 22:21:14 INFO  [ach] Batch completed: 1824 settled, 3 NSF
+2026-05-08 02:00:01 INFO  [mers] Nightly sync started
+2026-05-08 02:03:48 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-08 22:00:01 INFO  [ach] Nightly batch started: 1812 scheduled debits
+2026-05-08 22:20:48 INFO  [ach] Batch completed: 1809 settled, 3 NSF
+2026-05-09 02:00:01 INFO  [mers] Nightly sync started
+2026-05-09 02:03:51 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-09 22:00:01 INFO  [ach] Nightly batch started: 102 scheduled debits
+2026-05-09 22:02:18 INFO  [ach] Batch completed: 102 settled, 0 NSF
+2026-05-10 02:00:01 INFO  [mers] Nightly sync started
+2026-05-10 02:03:44 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-11 02:00:01 INFO  [mers] Nightly sync started
+2026-05-11 02:03:58 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-11 22:00:01 INFO  [ach] Nightly batch started: 1844 scheduled debits
+2026-05-11 22:21:24 INFO  [ach] Batch completed: 1841 settled, 3 NSF
+2026-05-12 02:00:01 INFO  [mers] Nightly sync started
+2026-05-12 02:03:42 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-12 14:18:33 INFO  [boarding] Schema fix v2.1.3 deployed: escrow_date_format year-inference (parity with cfcu fix)
+2026-05-12 14:18:34 INFO  [boarding] Schema fix v2.1.3 deployed: missing_co_borrower_ssn now allows null for single-borrower loans
+2026-05-12 22:00:01 INFO  [ach] Nightly batch started: 1858 scheduled debits
+2026-05-12 22:21:48 INFO  [ach] Batch completed: 1854 settled, 4 NSF
+2026-05-13 02:00:01 INFO  [mers] Nightly sync started
+2026-05-13 02:03:51 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-13 22:00:01 INFO  [ach] Nightly batch started: 1849 scheduled debits
+2026-05-13 22:21:34 INFO  [ach] Batch completed: 1845 settled, 4 NSF
+2026-05-14 02:00:01 INFO  [mers] Nightly sync started
+2026-05-14 02:03:48 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-14 22:00:01 INFO  [ach] Nightly batch started: 1841 scheduled debits
+2026-05-14 22:21:18 INFO  [ach] Batch completed: 1838 settled, 3 NSF
+2026-05-15 02:00:01 INFO  [mers] Nightly sync started
+2026-05-15 02:03:54 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-15 22:00:01 INFO  [ach] Nightly batch started: 1822 scheduled debits
+2026-05-15 22:20:58 INFO  [ach] Batch completed: 1819 settled, 3 NSF
+2026-05-16 02:00:01 INFO  [mers] Nightly sync started
+2026-05-16 02:03:48 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-16 22:00:01 INFO  [ach] Nightly batch started: 98 scheduled debits
+2026-05-16 22:02:11 INFO  [ach] Batch completed: 98 settled, 0 NSF
+2026-05-17 02:00:01 INFO  [mers] Nightly sync started
+2026-05-17 02:03:51 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-18 02:00:01 INFO  [mers] Nightly sync started
+2026-05-18 02:03:48 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-18 22:00:01 INFO  [ach] Nightly batch started: 1851 scheduled debits
+2026-05-18 22:21:24 INFO  [ach] Batch completed: 1848 settled, 3 NSF
+2026-05-19 02:00:01 INFO  [mers] Nightly sync started
+2026-05-19 02:03:54 INFO  [mers] Sync completed: 14472 loans confirmed, 0 mismatches
+2026-05-19 18:00:01 INFO  [boarding] Starting scheduled test ingest run 2
+2026-05-19 18:00:14 INFO  [boarding] Downloading loan_tape_v2.csv from fidelity-prod-sftp
+2026-05-19 18:01:08 INFO  [boarding] Validating loan_tape_v2.csv: 14515 rows
+2026-05-19 18:07:42 INFO  [boarding] Ingested loan_tape_v2.csv: 14512 records, 3 rejected (see rejects-2026-05-19.csv)
+2026-05-19 18:07:42 WARN  [boarding] Rejected loan_id=2014881: property_type "MFR" not recognized (expected one of: SFR, MAN, CON, PUD)
+2026-05-19 18:07:42 WARN  [boarding] Rejected loan_id=2015923: property_type "MFR" not recognized (expected one of: SFR, MAN, CON, PUD)
+2026-05-19 18:07:42 WARN  [boarding] Rejected loan_id=2017104: property_type "MFR" not recognized (expected one of: SFR, MAN, CON, PUD)
+2026-05-19 18:07:42 INFO  [boarding] Reject breakdown: 3 unknown_property_type
+2026-05-19 18:07:43 INFO  [boarding] Comparison vs. v1: +40 net new records, -16 reject rate improvement
+2026-05-19 22:00:01 INFO  [ach] Nightly batch started: 1862 scheduled debits
+2026-05-19 22:21:54 INFO  [ach] Batch completed: 1859 settled, 3 NSF
+2026-05-20 02:00:01 INFO  [mers] Nightly sync started
+2026-05-20 02:03:58 INFO  [mers] Sync completed: 14512 loans confirmed, 0 mismatches
+2026-05-20 09:14:22 INFO  [boarding] Ingest summary emailed to deployment team (jamie.cole@valon.com)
+2026-05-20 22:00:01 INFO  [ach] Nightly batch started: 1857 scheduled debits
+2026-05-20 22:21:42 INFO  [ach] Batch completed: 1854 settled, 3 NSF
+2026-05-21 02:00:01 INFO  [mers] Nightly sync started
+2026-05-21 02:03:51 INFO  [mers] Sync completed: 14512 loans confirmed, 0 mismatches
+2026-05-21 06:00:02 INFO  [health] All subsystems nominal
