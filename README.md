@@ -1,6 +1,6 @@
 # Valon Takehome 
 
-A slide editor — built to be driven by both human users and AI agents.
+A slide editor — built to be driven by both human users and AI agents. My core thesis is that AI agents should be able to do everything a human user can do. So, Claude Code can use this application just as well as human users can. 
 
 - **Agent API & deck schema:** see [`AGENTS.md`](AGENTS.md)
 - **Claude Code plugin** (`/weekly-deck`, `/deck-status`): see [`plugin/`](plugin/)
