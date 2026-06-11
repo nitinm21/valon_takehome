@@ -1,11 +1,10 @@
-# Valon Takehome 
+# AI Slide Editor
 
-A slide editor — built to be driven by both human users and AI agents. My core thesis is that AI agents should be able to do everything a human user can do. So, Claude Code can use this application just as well as human users can. 
+A slide editor, built to be driven by both human users and AI agents. 
+My core thesis is that AI agents should be able to do everything a human user can do. So, Claude Code can use this application just as well as human users can. 
 
 - **Agent API & deck schema:** see [`AGENTS.md`](AGENTS.md)
 - **Claude Code plugin** (`/weekly-deck`, `/deck-status`): see [`plugin/`](plugin/)
-- **Sample customer bundles** (the grounding data): [`samples/customers/`](samples/customers/)
-
 ---
 
 ## Quick start
@@ -36,7 +35,7 @@ cp .env.example .env.local
 
 **4. Add your Google AI API key**
 
-This app uses Google's Gemini models. Create a free key here:
+Create a free key here:
 
 **[Create a key at Google AI Studio → aistudio.google.com/apikey](https://aistudio.google.com/apikey)**
 
