@@ -90,19 +90,6 @@ start the app first if it isn't running.
 
 ---
 
-## Troubleshooting
-
-- **Generation fails / 401 / "missing API key":** Make sure `GOOGLE_API_KEY` is
-  set in `.env.local` and that you restarted `npm run dev` after editing it.
-- **Port 3000 is in use:** Run on another port with `npm run dev -- -p 3001`.
-- **Stale build errors:** Delete the `.next` folder and run `npm run dev` again.
-- **Where are decks stored?** Server-side, as JSON files in `data/decks/`
-  (git-ignored). That's what lets agents and the browser share one source of
-  truth. Decks from older versions of the app (browser localStorage) migrate to
-  the server automatically the first time the library loads.
-
----
-
 ## How it works
 
 - **Deck library** (`/`) — browse, open, or create decks (agent-created decks
